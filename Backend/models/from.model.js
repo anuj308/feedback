@@ -1,4 +1,4 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const formSchema = new mongoose.Schema(
   {
@@ -10,10 +10,14 @@ const formSchema = new mongoose.Schema(
     //   type: Schema.Types.ObjectId,
     //   ref: "User",
     // },
+    headData: {
+      type: Object,
+      default: {},
+    },
     data: {
-      type:Object,
-      default:{}
-    }
+      type: Object,
+      default: {},
+    },
   },
   { timestamps: true }
 );

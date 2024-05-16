@@ -1,9 +1,9 @@
 import express from "express";
-import { createForm } from "../controllers/form.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
+import { storeForm } from "../controllers/store.controller.js";
 
 const router = express.Router();
 
-router.route("/").post(verifyJWT, createForm);
+router.route("/").post(verifyJWT, storeForm);
 
 export default router;

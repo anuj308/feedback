@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose,{Schema} from "mongoose";
 
 const formStoreSchema = new mongoose.Schema(
   {
@@ -18,4 +18,4 @@ const formStoreSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export const formStore = mongoose.model("fomrStore",formStoreSchema)
+export const Store = mongoose.model("Store",formStoreSchema)
