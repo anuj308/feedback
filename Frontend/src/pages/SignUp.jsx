@@ -1,13 +1,12 @@
 import React,{useContext,useState} from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
-import { StoreContext } from "../Context/StoreContext";
+import { useForms} from "../Context/StoreContext";
 import axios from "axios";
 // import { ProfilePicture } from "../components";
 
 const SignUp = () => {
-  const { setStatus, status, url, userData, setUserData } =
-    useContext(StoreContext);
+  const { changeStatus, status, url, userData, setUser } = useForms();
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
@@ -17,9 +16,9 @@ const SignUp = () => {
     try {
        const newurl= `/api/v1/user/register`
         const response = await axios.post(newurl,data);
-        setUserData(response.data.data)
+        setUser(response.data.data)
         console.log(response.data.data)
-            setStatus(true);
+            changeStatus(true);
             navigate("/")
     //   if (userData) {
     //     const userData = await authService.getCurrentUser();

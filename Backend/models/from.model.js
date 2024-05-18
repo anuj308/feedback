@@ -10,9 +10,13 @@ const formSchema = new mongoose.Schema(
     //   type: Schema.Types.ObjectId,
     //   ref: "User",
     // },
-    headData: {
-      type: Object,
-      default: {},
+    formTitle:{
+      type:String,
+      required:true
+    },
+    formDescription:{
+      type:String,
+      required:true
     },
     data: {
       type: Object,

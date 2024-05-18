@@ -10,6 +10,14 @@ const formStoreSchema = new mongoose.Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    formTitle:{
+      type:String,
+      required:true
+    },
+    formDescription:{
+      type:String,
+      required:true
+    },
     feedbackUser: {
       type: Schema.Types.ObjectId,
       ref: "User",

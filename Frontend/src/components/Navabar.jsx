@@ -1,9 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { StoreContext } from "../Context/StoreContext";
+import { useForms } from "../Context/StoreContext";
 import axios from "axios";
 const Navabar = () => {
-  const { status, setStatus, setUserData } = useContext(StoreContext);
+  const { status, changeStatus, setUser } =useForms();
   const [showDrop, setShowDrop] = useState(false);
   const navigate = useNavigate();
 
@@ -12,13 +12,15 @@ const Navabar = () => {
       const response = await axios.post("/api/v1/user/logout");
       console.log(response);
       localStorage.removeItem("token");
-      setStatus(false);
-      setUserData({});
+      changeStatus(false);
+      setUser({});
       navigate("/");
     } catch (error) {
       console.log("error on logout", error);
     }
   };
+
+  useEffect(()=>{console.log(status)},[])
   return (
     <>
       <nav className="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">

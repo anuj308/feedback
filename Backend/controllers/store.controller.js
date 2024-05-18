@@ -7,13 +7,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // admin
 const storeForm = asyncHandler(async (req,res)=>{
-    const {data ,ownerId} = req.body;
+    const {data ,ownerId,formTitle,formDescription} = req.body;
     const {feedbackUserId} = req.user._id;
     // console.log("created form inside")
-    if (!data) {
+    if (!data && !headData) {
         throw new ApiError(400,"data is required")
     }
-    const form = await Store.create({data,Owner:ownerId,feedbackUser:feedbackUserId})
+    const form = await Store.create({data,Owner:ownerId,formTitle,formDescription,feedbackUser:feedbackUserId})
     if (!form) {
         throw new ApiError(500,"something went wrong will saving response ")
     }

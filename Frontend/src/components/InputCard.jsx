@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Input, MultipeChoice, Select } from "./index.js";
-import { StoreContext } from "../Context/StoreContext.jsx";
+import { Input, MultipeChoice, Select, CheckBox } from "./index.js";
+import { useForms } from "../Context/StoreContext.jsx";
 
 const InputCard = ({
   titlePlaceholder = "Question",
@@ -9,6 +9,7 @@ const InputCard = ({
   className = "",
   option = "Shortanswer",
   id,
+  question,
   required = false,
   select,
   name1,
@@ -16,15 +17,7 @@ const InputCard = ({
   card,
   ...props
 }) => {
-  const {
-    cards,
-    setcards,
-    addCard,
-    updateCard,
-    deleteCard,
-    multipleChoice,
-    setMultipleChoice,
-  } = useContext(StoreContext);
+  const { cards, setCards, addCard, updateCard, deleteCard } = useForms();
 
   const [options, setoptions] = useState([
     { option: "Short answer", optionValue: "Shortanswer" },
@@ -36,6 +29,9 @@ const InputCard = ({
   ]);
 
   // n=multiple choice
+  const [multipleChoice, setMultipleChoice] = useState([
+    { index: 148798, value: "", id: Date.now() },
+  ]);
 
   const addMul = (mInfo) => {
     setMultipleChoice((prev) => [...prev, { id: Date.now(), ...mInfo }]);
@@ -43,6 +39,17 @@ const InputCard = ({
   const delMul = (id) => {
     // console.log(id);
     setMultipleChoice((prev) => prev.filter((mul) => mul.id != id));
+  };
+  // check boxes choice
+  const [checkBoxes, setCheckboxes] = useState([
+    { index: 156787, value: "", id: Date.now() },
+  ]);
+
+  const addCheck = (mInfo) => {
+    setCheckboxes((prev) => [...prev, { id: Date.now(), ...mInfo }]);
+  };
+  const delCheck = (id) => {
+    setCheckboxes((prev) => prev.filter((mul) => mul.id != id));
   };
 
   // data of card
@@ -94,18 +101,32 @@ const InputCard = ({
       prev.map((mul) => (mul.id === id ? { ...mul, value: value } : mul))
     );
   };
+  const onChangeHandlerCheck = (event, id) => {
+    const value = event.target.value;
+    const name = event.target.name;
+    console.log(value,name)
+    setCheckboxes((prev) =>
+      prev.map((mul) => (mul.id === id ? { ...mul, value: value } : mul))
+    );
+  };
 
   const toogleReq = () => {
     const re = data.required;
     setData((prev) => ({ ...prev, required: !re }));
   };
 
-  const datadefaultAll = { data: datadefault, multipleChoice };
+  const datadefaultAll = { data: datadefault, multipleChoice ,checkBoxes};
   const titleDescriptionDataAll = {
     data: titleDescriptionData,
     multipleChoice: {},
+    checkBoxes:{}
   };
-  const dataAll = { data, multipleChoice };
+  const dataAll = { data, multipleChoice,checkBoxes };
+
+  // const delCard = ()=>{
+  //   console.log("del",id)
+  //   deleteCard(id)
+  // }
   // console.log(dataAll);
 
   // const addTitleDesc = () => {
@@ -154,8 +175,6 @@ const InputCard = ({
               {...(required ? "required" : "")}
             />
           )}
-
-          
         </div>
         {/* <DropDown className='px-6 pt-4 pb-2 '/> */}
         <div className="w-full">
@@ -172,27 +191,26 @@ const InputCard = ({
       </div>
 
       <div>
-      <div className="px-6 pt-4 ">
-            {data.option === "Multipechoice" && (
-              <>
-                <h1>Multipechoice</h1>
-                <div className="flex items-center mb-4 flex-row space-x-3">
-                  
-                  <div className="m-1 w-full">
-                    {multipleChoice.map((mul) => (
-                      <>
-                        <div key={mul.index} className="m-1 w-full">
-                          <MultipeChoice
-                            mul={mul}
-                            change={onChangeHandlerMul}
-                            id={mul.id}
-                            choice={mul.value}
-                            del={delMul}
-                          />
-                        </div>
-                      </>
-                    ))}
-                    <input
+        <div className="px-6 pt-4 ">
+          {data.option === "Multipechoice" && (
+            <>
+              <h1>Multipechoice</h1>
+              <div className="flex items-center mb-4 flex-row space-x-3">
+                <div className="m-1 w-full">
+                  {multipleChoice.map((mul) => (
+                    <>
+                      <div key={mul.index} className="m-1 w-full">
+                        <MultipeChoice
+                          mul={mul}
+                          change={onChangeHandlerMul}
+                          id={mul.id}
+                          choice={mul.value}
+                          del={delMul}
+                        />
+                      </div>
+                    </>
+                  ))}
+                  <input
                     id="country-option-1"
                     type="radio"
                     name="countries"
@@ -200,35 +218,70 @@ const InputCard = ({
                     className="w-4 h-4 "
                     readOnly
                   />
-                    <span
-                      onClick={() =>
-                        addMul({ index: multipleChoice.length + 1, value: "" })
-                      }
-                    >
-                      {"  "}
-                      Add option{" "}
-                    </span>{" "}
-                    or{" "}
-                    <span
-                      onClick={() =>
-                        addMul({
-                          index: multipleChoice.length + 1,
-                          value: "",
-                          other: true,
-                        })
-                      }
-                    >
-                      {" "}
-                      Add "Other"
-                    </span>
-                  </div>
+                  <span
+                    onClick={() =>
+                      addMul({ index: multipleChoice.length + 1, value: "" })
+                    }
+                  >
+                    {"  "}
+                    Add option{" "}
+                  </span>{" "}
+                  or{" "}
+                  <span
+                    onClick={() =>
+                      addMul({
+                        index: multipleChoice.length + 1,
+                        value: "",
+                        other: true,
+                      })
+                    }
+                  >
+                    {" "}
+                    Add "Other"
+                  </span>
                 </div>
-              </>
-            )}
-            {option === "Checkboxes" && <h1>Checkboxes</h1>}
-            {option === "Paragraph" && <h1>Paragraph</h1>}
-            {option === "Fileupload" && <h1>Fileupload</h1>}
-          </div>
+              </div>
+            </>
+          )}
+          {data.option === "Checkboxes" && (
+            <>
+              <h1>Checkboxes</h1>
+
+              {checkBoxes.map((check) => (
+                <>
+                  <div key={check.index} className="m-1 w-full">
+                    <CheckBox
+                      check={check}
+                      change={onChangeHandlerCheck}
+                      id={check.id}
+                      choice={check.value}
+                      del={delCheck}
+                    />
+                  </div>
+                 
+                </>
+              ))}
+               <input
+                    id="country-option-1"
+                    type="radio"
+                    name="countries"
+                    value="USA"
+                    className="w-4 h-4 "
+                    readOnly
+                  />
+                  <span
+                    onClick={() =>
+                      addCheck ({ index: checkBoxes.length + 1, value: "" })
+                    }
+                  >
+                    {"  "}
+                    Add option{" "}
+                  </span>{" "}
+            </>
+          )}
+          {data.option === "Paragraph" && <h1>Paragraph</h1>}
+          {data.option === "Fileupload" && <h1>Fileupload</h1>}
+        </div>
       </div>
 
       {/* <div className="max-w-sm rounded overflow-hidden shadow-lg"> */}
