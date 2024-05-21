@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FormProvider } from "./Context/StoreContext";
 import axios from "axios";
+import Form from "./pages/Form";
 
 function App() {
   const token = localStorage.getItem("token");
@@ -29,7 +30,7 @@ function App() {
   const [cards, setcards] = useState([
     {
       data: {
-        id: 1,
+        id: 1232212,
         question: "",
         titlePlaceholder: "Question",
         description: "",
@@ -41,15 +42,15 @@ function App() {
         name2: "description",
       },
       id: 1232212,
-      multipleChoice: [{ index: 1, value: "", id: Date.now() }],
+      multipleChoice: [{ index: 68798, value: "", id: Date.now() }],
+      checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
     },
   ]);
 
   const [headData, setHeadData] = useState({
-    formTitle: "",
-    formDescription: "",
+    formTitle: "Untitled Form",
+    formDescription: "No Description",
   });
-  
 
   const setCards = (data) => {
     setcards(data);
@@ -60,10 +61,9 @@ function App() {
   };
 
   const updateCard = (id, info) => {
-    console.log(id, info);
-    setcards((prev) => prev.map((card) => (card.id === id ? info : card)));
-    console.log(cards);
-    // setMultipleChoice([{ index: 1, value: "", id: Date.now() }]);
+    // console.log(id, info);
+    setcards((prev) => prev.map((card) => card.id === id ? info : card));
+    // console.log(cards);
   };
   const deleteCard = (id) => {
     console.log(id);
@@ -96,7 +96,17 @@ function App() {
       setStatus(true);
       // console.log(status);
     }
-  }, []);
+    console.log(" create cards updated ",cards)
+  }, [cards]);
+  // useEffect(() => {
+  //   localStorage.setItem("cards", JSON.stringify(cards));
+  //   if (token) {
+  //     // console.log(token);
+  //     setStatus(true);
+  //     // console.log(status);
+  //   }
+  //   console.log("cards updated ",cards)
+  // }, [cards]);
 
   return (
     <FormProvider
@@ -121,7 +131,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/create" element={<CreateForm />} />
-          {/* <Route path='/Forms' element={} /> */}
+          <Route path="/form/:fId" element={<Form />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<SignUp />} />
         </Routes>

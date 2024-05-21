@@ -9,5 +9,5 @@ import HomeCard from './HomeCard'
 import MultipeChoice from './MultipeChoice'
 import CheckBox from './CheckBox'
 import RenameCard from './RenameCard'
-
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard}
+import FormCard from './FormCard'
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard}

@@ -103,10 +103,10 @@ const InputCard = ({
   };
   const onChangeHandlerCheck = (event, id) => {
     const value = event.target.value;
-    const name = event.target.name;
-    console.log(value,name)
+    // const name = event.target.name;
+    // console.log(value, name);
     setCheckboxes((prev) =>
-      prev.map((mul) => (mul.id === id ? { ...mul, value: value } : mul))
+      prev.map((mul) => (mul.id === id ? { ...mul, "value": value } : mul))
     );
   };
 
@@ -115,13 +115,19 @@ const InputCard = ({
     setData((prev) => ({ ...prev, required: !re }));
   };
 
-  const datadefaultAll = { data: datadefault, multipleChoice ,checkBoxes};
+  const dataAll = {id, data, multipleChoice, checkBoxes };
+  const datadefaultAll = { data: datadefault, multipleChoice, checkBoxes };
   const titleDescriptionDataAll = {
     data: titleDescriptionData,
     multipleChoice: {},
-    checkBoxes:{}
+    checkBoxes: {},
   };
-  const dataAll = { data, multipleChoice,checkBoxes };
+  const updateCardFun = () => {
+    updateCard(id, dataAll);
+    // setMultipleChoice([{ index: 148798, value: "", id: Date.now() }]);
+    // setCheckboxes([{ index: 156787, value: "", id: Date.now() }]);
+  };
+  
 
   // const delCard = ()=>{
   //   console.log("del",id)
@@ -159,7 +165,8 @@ const InputCard = ({
             onChange={onChangeHandler}
             value={data.question}
             {...props}
-            {...(required ? "required" : "")}
+            // {...(required ? "required" : "")}
+            // required={true}
           />
           {/* {description &&
                 <Input type="text" value={description} placeholder={descriptionPlaceholder} {...props} {...required ? "required" : ""} />
@@ -172,7 +179,7 @@ const InputCard = ({
               name={card.name2}
               onChange={onChangeHandler}
               value={data.description}
-              {...(required ? "required" : "")}
+              // {...(required ? "required" : "")}
             />
           )}
         </div>
@@ -197,9 +204,9 @@ const InputCard = ({
               <h1>Multipechoice</h1>
               <div className="flex items-center mb-4 flex-row space-x-3">
                 <div className="m-1 w-full">
-                  {multipleChoice.map((mul) => (
+                  {multipleChoice.map((mul,index) => (
                     <>
-                      <div key={mul.index} className="m-1 w-full">
+                      <div key={index} className="m-1 w-full">
                         <MultipeChoice
                           mul={mul}
                           change={onChangeHandlerMul}
@@ -214,7 +221,6 @@ const InputCard = ({
                     id="country-option-1"
                     type="radio"
                     name="countries"
-                    value="USA"
                     className="w-4 h-4 "
                     readOnly
                   />
@@ -246,7 +252,6 @@ const InputCard = ({
           {data.option === "Checkboxes" && (
             <>
               <h1>Checkboxes</h1>
-
               {checkBoxes.map((check) => (
                 <>
                   <div key={check.index} className="m-1 w-full">
@@ -258,25 +263,24 @@ const InputCard = ({
                       del={delCheck}
                     />
                   </div>
-                 
                 </>
               ))}
-               <input
-                    id="country-option-1"
-                    type="radio"
-                    name="countries"
-                    value="USA"
-                    className="w-4 h-4 "
-                    readOnly
-                  />
-                  <span
-                    onClick={() =>
-                      addCheck ({ index: checkBoxes.length + 1, value: "" })
-                    }
-                  >
-                    {"  "}
-                    Add option{" "}
-                  </span>{" "}
+              <input
+                id="country-option-1"
+                type="radio"
+                name="countries"
+                value="USA"
+                className="w-4 h-4 "
+                readOnly
+              />
+              <span
+                onClick={() =>
+                  addCheck({ index: checkBoxes.length + 1, value: "" })
+                }
+              >
+                {"  "}
+                Add option{" "}
+              </span>{" "}
             </>
           )}
           {data.option === "Paragraph" && <h1>Paragraph</h1>}
@@ -329,7 +333,7 @@ const InputCard = ({
         {card.select ? "" : (data.select = false)}
 
         <div
-          onClick={() => updateCard(id, dataAll)}
+          onClick={() => updateCardFun()}
           className="bg-red-100 border rounded p-2 "
         >
           save

@@ -8,18 +8,17 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 // admin
 const createForm = asyncHandler(async (req, res) => {
   const { data, formTitle,formDescription } = req.body;
-  const { ownerId } = req.user._id;
-  // console.log("created form inside")
+  
   if (!data && !headData && !formTitle && !formDescription) {
     throw new ApiError(400, "data is required");
   }
-  const form = await Form.create({ data,formTitle,formDescription, Owner: ownerId });
+  const form = await Form.create({ data,formTitle,formDescription, Owner:  req.user._id });
   if (!form) {
     throw new ApiError(500, "something went wrong will creating form");
   }
   return res
     .status(200)
-    .json(new ApiResponse(200, { form }, "created form successfully"));
+    .json(new ApiResponse(200, { form}, "created form successfully"));
 });
 
 const getForm = asyncHandler(async (req, res) => {

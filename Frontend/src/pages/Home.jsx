@@ -7,8 +7,8 @@ const Home = () => {
   const [allForms, setAllForms] = useState([]);
   const navigate = useNavigate();
   const {
-    status,
-    changeStatus,
+    // status,
+    // changeStatus,
     token,
     headData,
     // onChangeHandler,
@@ -16,7 +16,7 @@ const Home = () => {
     userData,
   } = useForms();
   const [showRename, setShowRename] = useState(false);
-
+  const [status, setStatus] = useState(false);
   const deleteForm = async (id) => {
     try {
       const response = await axios.delete("/api/v1/form/f/" + id);
@@ -32,23 +32,28 @@ const Home = () => {
   };
 
   const toCreate = () => {
-    navigate("/create");
+    // console.log(status);
+    if (status === false) {
+      navigate("/login");
+    } else {
+      navigate("/create");
+    }
   };
   // for rename of form
-  const [formTitle,setFormTitle]=useState("")
-  const [formRenameId,setFormRenameId]=useState("")
-    const onChangeHandlerRename = (event) => {
-        const value = event.target.value;
-        const name = event.target.name;
-        // console.log(value,name)
-        setFormTitle(value);
-      };
+  const [formTitle, setFormTitle] = useState("");
+  const [formRenameId, setFormRenameId] = useState("");
+  const onChangeHandlerRename = (event) => {
+    const value = event.target.value;
+    const name = event.target.name;
+    // console.log(value,name)
+    setFormTitle(value);
+  };
 
-  const renameForm = (id,title) => {
-    console.log(title)
-    setFormTitle(title.length===0?"Untitled Form":title)
-    setFormRenameId(id)
-    console.log(id)
+  const renameForm = (id, title) => {
+    // console.log(title);
+    setFormTitle(title.length === 0 ? "Untitled Form" : title);
+    setFormRenameId(id);
+    // console.log(id);
     setShowRename(true);
   };
 
@@ -63,15 +68,16 @@ const Home = () => {
       const func = async () => {
         const response = await axios.get("/api/v1/form");
         setAllForms(response.data.data.form);
-        console.log(response.data.data.form);
+        // console.log(response.data.data.form);
       };
       if (token) {
         // console.log(token);
+        setStatus(true);
         if (allForms.length === 0) {
           func();
         }
         // console.log(token);
-        changeStatus(true);
+        // changeStatus(true);
         // console.log(status);
       }
     } catch (error) {
@@ -93,21 +99,20 @@ const Home = () => {
           />
         </div>
       )}
-      <div className="h-80v px-6 pt-4 pb-2 flex flex-row space-x-3 flex-wrap mx-auto w-full">
+      <div className="h-80v px-6 pt-4 pb-2 flex flex-row flex-wrap justify-center mx-auto w-full">
         {allForms.length === 0 ? (
           <h1 className=" text-black text-3xl flex justify-center items-center h-80v ">
-            No Form Exist -{" "}
+            No Form Exist -
             <span className="hover:text-blue-400" onClick={() => toCreate()}>
-              {" "}
-              Create now{" "}
+              Create now
             </span>
           </h1>
         ) : (
           allForms.map((fon, index) => {
-            console.log(fon);
+            // console.log("it is fon",fon);
             return (
               <div className="text-black text-xl " key={index}>
-                <HomeCard fon={fon} del={deleteForm} rename={renameForm} />
+                <HomeCard fon={fon} del={deleteForm} rename={renameForm} id={fon._id} />
               </div>
             );
           })
