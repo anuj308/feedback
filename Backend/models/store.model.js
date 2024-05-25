@@ -22,6 +22,10 @@ const formStoreSchema = new mongoose.Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    formId:{
+      type: Schema.Types.ObjectId,
+      ref: "Form",
+    },
   },
   { timestamps: true }
 );

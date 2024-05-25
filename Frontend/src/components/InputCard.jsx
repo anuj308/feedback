@@ -14,6 +14,8 @@ const InputCard = ({
   select,
   name1,
   name2,
+  multipleChoiceC,
+  checkBoxesC,
   card,
   ...props
 }) => {
@@ -29,9 +31,7 @@ const InputCard = ({
   ]);
 
   // n=multiple choice
-  const [multipleChoice, setMultipleChoice] = useState([
-    { index: 148798, value: "", id: Date.now() },
-  ]);
+  const [multipleChoice, setMultipleChoice] = useState(multipleChoiceC);
 
   const addMul = (mInfo) => {
     setMultipleChoice((prev) => [...prev, { id: Date.now(), ...mInfo }]);
@@ -41,9 +41,7 @@ const InputCard = ({
     setMultipleChoice((prev) => prev.filter((mul) => mul.id != id));
   };
   // check boxes choice
-  const [checkBoxes, setCheckboxes] = useState([
-    { index: 156787, value: "", id: Date.now() },
-  ]);
+  const [checkBoxes, setCheckboxes] = useState(checkBoxesC);
 
   const addCheck = (mInfo) => {
     setCheckboxes((prev) => [...prev, { id: Date.now(), ...mInfo }]);
@@ -54,16 +52,16 @@ const InputCard = ({
 
   // data of card
   const [data, setData] = useState({
-    question: "",
-    titlePlaceholder: "Question",
-    description: "",
-    descriptionPlaceholder: "",
-    option: "Shortanswer",
-    id: card.id,
-    select: true,
-    required: false,
-    name1: "question",
-    name2: "description",
+    question,
+    titlePlaceholder,
+    description,
+    descriptionPlaceholder,
+    option,
+    id,
+    select,
+    required,
+    name1,
+    name2,
   });
 
   const datadefault = {
@@ -83,6 +81,7 @@ const InputCard = ({
     titlePlaceholder: "Title",
     description: "",
     descriptionPlaceholder: "Description",
+    option: "title",
     select: false,
     required: false,
     name1: "question",
@@ -106,7 +105,7 @@ const InputCard = ({
     // const name = event.target.name;
     // console.log(value, name);
     setCheckboxes((prev) =>
-      prev.map((mul) => (mul.id === id ? { ...mul, "value": value } : mul))
+      prev.map((mul) => (mul.id === id ? { ...mul, value: value } : mul))
     );
   };
 
@@ -115,42 +114,27 @@ const InputCard = ({
     setData((prev) => ({ ...prev, required: !re }));
   };
 
-  const dataAll = {id, data, multipleChoice, checkBoxes };
-  const datadefaultAll = { data: datadefault, multipleChoice, checkBoxes };
+  const dataAll = { id: Date.now(), data,  multipleChoice: [{ index: 148798, value: "", id: Date.now() }],
+  checkBoxes: [{ index: 156787, value: "", id: Date.now() }],};
+  const dataAllUpdate = { id, data, multipleChoice, checkBoxes };
+  const datadefaultAll = {
+    data: datadefault,
+    multipleChoice: [{ index: 148798, value: "", id: Date.now() }],
+    checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
+  };
   const titleDescriptionDataAll = {
     data: titleDescriptionData,
     multipleChoice: {},
     checkBoxes: {},
   };
   const updateCardFun = () => {
-    updateCard(id, dataAll);
-    // setMultipleChoice([{ index: 148798, value: "", id: Date.now() }]);
-    // setCheckboxes([{ index: 156787, value: "", id: Date.now() }]);
+    updateCard(id, dataAllUpdate);
   };
-  
 
-  // const delCard = ()=>{
-  //   console.log("del",id)
-  //   deleteCard(id)
-  // }
-  // console.log(dataAll);
 
-  // const addTitleDesc = () => {
-  //     addCard(titleDescriptionData);
-  // };
-  // const duplicate = () => {
-  //     addCard(card);
-  // };
-  // const save = () => {
-  //     updateCard(card.id, data);
-  //     console.log("saving")
-  //     console.log(cards)
-  // };
-
-  // useEffect(() => {
-  //   console.log(multipleChoice);
-  //   console.log(data);
-  // }, [multipleChoice, data]);
+  useEffect(() => {
+    updateCardFun()
+  }, [multipleChoice,checkBoxes,data]);
   // console.log(data)
 
   return (
@@ -204,7 +188,7 @@ const InputCard = ({
               <h1>Multipechoice</h1>
               <div className="flex items-center mb-4 flex-row space-x-3">
                 <div className="m-1 w-full">
-                  {multipleChoice.map((mul,index) => (
+                  {multipleChoice.map((mul, index) => (
                     <>
                       <div key={index} className="m-1 w-full">
                         <MultipeChoice
@@ -332,12 +316,12 @@ const InputCard = ({
         </div>
         {card.select ? "" : (data.select = false)}
 
-        <div
+        {/* <div
           onClick={() => updateCardFun()}
           className="bg-red-100 border rounded p-2 "
         >
           save
-        </div>
+        </div> */}
       </div>
     </div>
   );

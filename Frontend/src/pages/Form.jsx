@@ -11,10 +11,12 @@ const Form = () => {
   const [formTitle, setformTitle] = useState("");
   const [formDescription, setformdescription] = useState("");
   const [ownerId, setOwnerId] = useState("");
+  const [formId, setFormId] = useState("");
   const updateCard = (id, info) => {
     console.log(id, info);
     setCards((prev) => prev.map((card) => (card.id === id ? info : card)));
   };
+  const [save,setSave]=useState(false)
 
   const storeForm = async() => {
     try {
@@ -23,6 +25,7 @@ const Form = () => {
         formDescription,
         data: cards,
         ownerId,
+        formId,
       });
       console.log(response);
       navigate("/")
@@ -40,10 +43,11 @@ const Form = () => {
         const response = await axios.get("/api/v1/form/f/" + fId);
         setformTitle(response.data.data.form.formTitle);
         setformdescription(response.data.data.form.formDescription);
-        setOwnerId(response.data.data.form._id)
+        setOwnerId(response.data.data.form.Owner)
         // console.log(response.data.data.form._id);
+        setFormId(response.data.data.form._id)
         setCards(response.data.data.form.data);
-        // console.log(response);
+        console.log(response);
       } catch (error) {
         console.log(error);
       }
@@ -89,6 +93,8 @@ const Form = () => {
                     description={card.data.description}
                     multipleChoice={card.multipleChoice}
                     checkBoxes={card.checkBoxes}
+                    save={save}
+                    setSave={setSave}
                   />
                 </div>
               );

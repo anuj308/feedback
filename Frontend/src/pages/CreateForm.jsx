@@ -1,57 +1,52 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Button, FormHead, InputCard } from "../components/index";
 import { useForms } from "../Context/StoreContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import axios from "axios";
 const CreateForm = () => {
-  const { status, headData, cards, setCards, createFormFunc } = useForms();
+  const { status, headData, setHead, cards, setCards, createFormFunc } =
+    useForms();
 
   const navigate = useNavigate();
+  const { fId } = useParams();
 
-  const createForm = async () => {
+  const func = async () => {
     try {
-      const response = await axios.post("/api/v1/form/create", {
-        formTitle: headData.formTitle,
-        formDescription: headData.formDescription,
-        data: cards,
+      const response = await axios.get("/api/v1/form/f/" + fId);
+      setHead({
+        formTitle: response.data.data.form.formTitle,
+        formDescription: response.data.data.form.formDescription,
       });
-      console.log(response);
-      setCards([
-        {
-          data: {
-            id: 1232212,
-            question: "",
-            titlePlaceholder: "Question",
-            description: "",
-            descriptionPlaceholder: "Description",
-            option: "Shortanswer",
-            required: false,
-            select: true,
-            name1: "question",
-            name2: "description",
-          },
-          id: 1232212,
-          multipleChoice: [{ index: 68798, value: "", id: Date.now() }],
-          checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
-        },
-      ]);
-      // localStorage.setItem("cards",cards)
-      navigate("/");
+      setCards(response.data.data.form.data);
     } catch (error) {
-      console.log(error);
+      console.log("error while fetching the create form", error);
     }
   };
 
+  const updateForm = async () => {
+    const response = await axios.post("/api/v1/form/f/" + fId, {
+      formTitle: headData.formTitle,
+      formDescription: headData.formDescription,
+      data: cards,
+    });
+    console.log("updated form",response)
+    localStorage.removeItem("cards");
+    navigate("/")
+  };
+
+  useEffect(() => {
+    func();
+  }, []);
+  // useEffect(() => {
+  //   updateForm()
+  // }, [cards]);
   return (
     <div>
       <div className="mx-auto w-1/2 mt-14 rounded overflow-hidden shadow-lg">
-        <FormHead />
+        <FormHead headData={headData} />
         <div className="my-8 ">
           {cards.map((card, index) => {
-            //  console.log(card)
-            //  console.log(card.id)
-            //  console.log(index)
-            //  console.log(card.data.question)
+            // console.log(card);
             return (
               <div key={index}>
                 <InputCard
@@ -67,15 +62,14 @@ const CreateForm = () => {
                   name1={card.data.name1}
                   name2={card.data.name2}
                   select={card.data.select}
-                  // multiplechoice={card.multipleChoice}
-                  // setMultipleChoice={setMultipleChoice}
+                  multipleChoiceC={card.multipleChoice}
+                  checkBoxesC={card.checkBoxes}
                 />
-                {/* <InputCard card={card.data}  /> */}
               </div>
             );
           })}
         </div>
-        <Button onClick={() => createForm()} className="flex">
+        <Button onClick={() => updateForm()} className="flex">
           Done
         </Button>
       </div>

@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // admin
 const storeForm = asyncHandler(async (req, res) => {
-  const { data, ownerId, formTitle, formDescription } = req.body;
+  const { data, ownerId,formId, formTitle, formDescription } = req.body;
 
   if (!data && !headData) {
     throw new ApiError(400, "data is required");
@@ -27,4 +27,21 @@ const storeForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { form }, "got response successfully"));
 });
 
-export { storeForm };
+const getAllResponsesByFormId = asyncHandler(async(req,res)=>{
+  const {formId} = req.params;
+  const store = await Store.aggregate([
+    {
+      $match:{
+        formId
+      }
+    }
+  ])
+  
+  if (!store) {
+    throw new ApiError(500,"something went wrong")
+  }
+
+  res.status(200).json(new ApiResponse(200,{store},"sucessfully fetched all the responses"))
+  
+})
+export { storeForm,getAllResponsesByFormId };

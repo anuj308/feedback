@@ -26,7 +26,15 @@ const FormCard = ({
     console.log(id, info);
     setCheckboxesF((prev) => prev.map((ch) => (ch.id == id ? info : ch)));
   };
-  useEffect(()=>{console.log(checkBoxesF)},[checkBoxesF])
+ 
+  useEffect(()=>{
+    updateCard(id, {
+          id,
+          data: { id, option, question, description, answer },
+          multipleChoice,
+          checkBoxes:checkBoxesF,
+        })
+  },[answer,checkBoxesF])
 
   return (
     <div
@@ -54,8 +62,7 @@ const FormCard = ({
         </div>
       </div>
 
-      <div>
-        <div className="px-6 pt-4 ">
+        <div className="px-6 pt-4 m-3 ">
           {card.data.option === "Shortanswer" && (
             <>
               <Input
@@ -105,9 +112,8 @@ const FormCard = ({
           {card.data.option === "Paragraph" && <h1>Paragraph</h1>}
           {card.data.option === "Fileupload" && <h1>Fileupload</h1>}
         </div>
-      </div>
 
-      <div className="px-6 pt-4 pb-2 flex flex-row space-x-3 flex-wrap mx-auto w-full ">
+      {/* <div className="px-6 pt-4 pb-2 flex flex-row space-x-3 flex-wrap mx-auto w-full ">
         <div
           onClick={() =>
             updateCard(id, {
@@ -121,7 +127,7 @@ const FormCard = ({
         >
           save
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

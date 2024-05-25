@@ -3,17 +3,19 @@ import { HomeCard, RenameCard } from "../components/index.js";
 import axios, { all } from "axios";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
+
 const Home = () => {
   const [allForms, setAllForms] = useState([]);
   const navigate = useNavigate();
+  const c = localStorage.getItem("userData")
+  const userData = JSON.parse(c)
   const {
     // status,
     // changeStatus,
     token,
     headData,
-    // onChangeHandler,
     cards,
-    userData,
+    // userData,
   } = useForms();
   const [showRename, setShowRename] = useState(false);
   const [status, setStatus] = useState(false);
@@ -21,7 +23,7 @@ const Home = () => {
     try {
       const response = await axios.delete("/api/v1/form/f/" + id);
       const func = async () => {
-        const response = await axios.get("/api/v1/form");
+        const response = await axios.get("/api/v1/form/o/"+ userData._id);
         setAllForms(response.data.data.form);
         // console.log(response.data.data.form);
       };
@@ -66,13 +68,14 @@ const Home = () => {
       // console.log(headData);
       // console.log(token);
       const func = async () => {
-        const response = await axios.get("/api/v1/form");
+            const response = await axios.get("/api/v1/form/o/"+ userData._id );
         setAllForms(response.data.data.form);
-        // console.log(response.data.data.form);
+        // console.log(response);
       };
       if (token) {
         // console.log(token);
         setStatus(true);
+        // console.log(allForms)
         if (allForms.length === 0) {
           func();
         }

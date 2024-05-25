@@ -8,18 +8,23 @@ import CreateForm from "./pages/CreateForm";
 import Home from "./pages/Home";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FormProvider } from "./Context/StoreContext";
-import axios from "axios";
 import Form from "./pages/Form";
+import Admin from "./pages/Admin";
 
 function App() {
   const token = localStorage.getItem("token");
 
-  // const url = `http://localhost:9000`;
   const [userData, setUserData] = useState({});
 
   const setUser = (data) => {
+    console.log(data)
     setUserData(data);
   };
+
+  useEffect(() => {
+    console.log(userData)
+  }, [userData])
+  
 
   const [status, setStatus] = useState(false);
 
@@ -61,9 +66,8 @@ function App() {
   };
 
   const updateCard = (id, info) => {
-    // console.log(id, info);
-    setcards((prev) => prev.map((card) => card.id === id ? info : card));
-    // console.log(cards);
+    setcards((prev) => prev.map((card) => (card.id === id ? info : card)));
+    console.log(cards);
   };
   const deleteCard = (id) => {
     console.log(id);
@@ -71,14 +75,12 @@ function App() {
   };
 
   const setHead = (info) => {
-    // console.log(headData)
     setHeadData(info);
   };
 
   const onChangeHandler = (event) => {
     const value = event.target.value;
     const name = event.target.name;
-    // console.log(value,name)
     setHeadData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -92,21 +94,11 @@ function App() {
   useEffect(() => {
     localStorage.setItem("cards", JSON.stringify(cards));
     if (token) {
-      // console.log(token);
       setStatus(true);
-      // console.log(status);
     }
-    console.log(" create cards updated ",cards)
+    console.log(" create cards updated ", cards);
   }, [cards]);
-  // useEffect(() => {
-  //   localStorage.setItem("cards", JSON.stringify(cards));
-  //   if (token) {
-  //     // console.log(token);
-  //     setStatus(true);
-  //     // console.log(status);
-  //   }
-  //   console.log("cards updated ",cards)
-  // }, [cards]);
+
 
   return (
     <FormProvider
@@ -130,7 +122,8 @@ function App() {
         <Navabar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/create" element={<CreateForm />} />
+          <Route path="/create/:fId" element={<CreateForm />}/>
+          <Route path="/admin/:fId" element={<Admin />}/>
           <Route path="/form/:fId" element={<Form />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<SignUp />} />

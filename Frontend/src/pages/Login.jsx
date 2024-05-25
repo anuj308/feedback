@@ -16,11 +16,12 @@ const Login = () => {
       const newurl = `/api/v1/user/login`;
       const response = await axios.post(newurl, data);
       console.log(response);
-      console.log(response.data.data.accessToken);
+      // console.log(response.data.data.accessToken);
       console.log(response.data.data.user);
-      console.log(cards);
-      setUser(response.data.data.user);
+      // console.log(cards);
+      // setUser(response.data.data.user);
       localStorage.setItem("token", response.data.data.accessToken);
+      localStorage.setItem("userData", JSON.stringify(response.data.data.user));
       // localStorage.setItem("cards",JSON.stringify(cards))
       changeStatus(true);
       navigate("/");

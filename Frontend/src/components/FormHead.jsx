@@ -13,7 +13,7 @@ const FormHead = () => {
             type="text"
             onChange={onChangeHandler}
             name="formTitle"
-            value={headData.title}
+            value={headData.formTitle}
             placeholder="Untitled form"
           />
         </div>
@@ -21,7 +21,7 @@ const FormHead = () => {
           type="text"
           onChange={onChangeHandler}
           name="formDescription"
-          value={headData.description}
+          value={headData.formDescription}
           placeholder="Untitled descripttion"
         />
       </div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForms } from "../Context/StoreContext";
 import axios from "axios";
 const Navabar = () => {
-  const { status, changeStatus, setUser } =useForms();
+  const { status, headData,cards,changeStatus, setUser } =useForms();
   const [showDrop, setShowDrop] = useState(false);
   const navigate = useNavigate();
 
@@ -18,8 +18,23 @@ const Navabar = () => {
     } catch (error) {
       console.log("error on logout", error);
       localStorage.removeItem("token");
+      localStorage.removeItem("userData");
+      localStorage.removeItem("cards");
       changeStatus(false)
       navigate("/login")
+    }
+  };
+  const createFormFunc = async () => {
+    try {
+      const response = await axios.post("/api/v1/form/create", {
+        formTitle: headData.formTitle,
+        formDescription: headData.formDescription,
+        data: cards,
+      });
+      console.log(response);
+      navigate(`/create/${response.data.data.form._id}`);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -99,7 +114,8 @@ const Navabar = () => {
               </li>
               <li>
                 <Link
-                  to="/create"
+                  // to="/createForm"
+                  onClick={()=> createFormFunc()}
                   className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
                 >
                   Create
