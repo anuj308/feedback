@@ -8,10 +8,14 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Store form response with new structure
 const storeForm = asyncHandler(async (req, res) => {
-  const { data, ownerId, formId, formTitle, formDescription, answers } = req.body;
+  const { formId, answers } = req.body;
 
   if (!formId) {
     throw new ApiError(400, "Form ID is required");
+  }
+
+  if (!answers || !Array.isArray(answers)) {
+    throw new ApiError(400, "Answers array is required");
   }
 
   // Get the form to validate it exists and is accepting responses
@@ -33,10 +37,7 @@ const storeForm = asyncHandler(async (req, res) => {
   if (form.settings?.limitToOneResponse && req.user) {
     const existingResponse = await Store.findOne({
       formId: formId,
-      $or: [
-        { respondentUser: req.user._id },
-        { feedbackUser: req.user._id }
-      ]
+      respondentUser: req.user._id
     });
     
     if (existingResponse) {
@@ -46,52 +47,39 @@ const storeForm = asyncHandler(async (req, res) => {
 
   const responseData = {
     formId,
-    Owner: ownerId,
-    formTitle: formTitle || form.formTitle,
-    formDescription: formDescription || form.formDescription,
+    answers,
     submittedAt: new Date(),
     ipAddress: req.ip,
     userAgent: req.get('User-Agent')
   };
 
-  // Handle new structure with answers array
-  if (answers && Array.isArray(answers)) {
-    responseData.answers = answers;
+  // Calculate quiz score if it's a quiz
+  if (form.settings?.isQuiz) {
+    let totalScore = 0;
+    const questionsMap = new Map();
     
-    // Calculate quiz score if it's a quiz
-    if (form.settings?.isQuiz) {
-      let totalScore = 0;
-      const questionsMap = new Map();
-      
-      // Create a map of questions for quick lookup
-      if (form.questions) {
-        form.questions.forEach(q => questionsMap.set(q.questionId, q));
-      }
-      
-      responseData.answers = answers.map(answer => {
-        const question = questionsMap.get(answer.questionId);
-        if (question && question.correctAnswer) {
-          const isCorrect = answer.answer === question.correctAnswer;
-          answer.isCorrect = isCorrect;
-          answer.pointsEarned = isCorrect ? (question.points || 1) : 0;
-          totalScore += answer.pointsEarned;
-        }
-        return answer;
-      });
-      
-      responseData.totalScore = totalScore;
+    // Create a map of questions for quick lookup
+    if (form.questions) {
+      form.questions.forEach(q => questionsMap.set(q.questionId, q));
     }
-  }
-
-  // Handle legacy structure
-  if (data) {
-    responseData.data = data;
+    
+    responseData.answers = answers.map(answer => {
+      const question = questionsMap.get(answer.questionId);
+      if (question && question.correctAnswer) {
+        const isCorrect = answer.answer === question.correctAnswer;
+        answer.isCorrect = isCorrect;
+        answer.pointsEarned = isCorrect ? (question.points || 1) : 0;
+        totalScore += answer.pointsEarned;
+      }
+      return answer;
+    });
+    
+    responseData.totalScore = totalScore;
   }
 
   // Set user information
   if (req.user) {
     responseData.respondentUser = req.user._id;
-    responseData.feedbackUser = req.user._id;
     
     // Set email if form collects emails
     if (form.settings?.collectEmail) {
@@ -138,22 +126,6 @@ const getAllResponsesByFormId = asyncHandler(async(req,res)=>{
       {
         $lookup: {
           from: "users",
-          localField: "Owner",
-          foreignField: "_id",
-          as: "owner",
-          pipeline: [
-            {
-              $project: {
-                fullName: 1,
-                email: 1
-              },
-            },
-          ],
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
           localField: "respondentUser",
           foreignField: "_id",
           as: "respondent",
@@ -169,9 +141,6 @@ const getAllResponsesByFormId = asyncHandler(async(req,res)=>{
       },
       {
         $addFields: {
-          owner: {
-            $first: "$owner",
-          },
           respondent: {
             $first: "$respondent",
           }
@@ -233,39 +202,24 @@ const getResponseAnalytics = asyncHandler(async(req, res) => {
     questionAnalytics: []
   };
 
-  // Process questions (handle both new and legacy structures)
-  const questions = form.questions && form.questions.length > 0 ? form.questions : 
-    (form.data && form.data.length > 0 ? form.data : []);
+  // Process questions from the new structure
+  const questions = form.questions || [];
 
   questions.forEach((question, index) => {
-    let questionId, questionText, questionType;
-    
-    if (question.questionId) {
-      questionId = question.questionId;
-      questionText = question.question;
-      questionType = question.type;
-    } else {
-      questionId = question.id || `legacy_${index}`;
-      questionText = question.data ? question.data.question : question.question || '';
-      questionType = question.data ? question.data.option : question.type || 'shortAnswer';
-    }
-
     const questionResponses = responses.map(response => {
       if (response.answers && Array.isArray(response.answers)) {
-        return response.answers.find(answer => answer.questionId === questionId);
-      } else if (response.data && typeof response.data === 'object') {
-        return { answer: response.data[questionId] || response.data[`question_${index}`] };
+        return response.answers.find(answer => answer.questionId === question.questionId);
       }
       return null;
     }).filter(Boolean);
 
     analytics.questionAnalytics.push({
-      questionId,
-      question: questionText,
-      type: questionType,
+      questionId: question.questionId,
+      question: question.question,
+      type: question.type,
       totalResponses: questionResponses.length,
       responses: questionResponses.map(r => r.answer),
-      summary: generateQuestionSummary(questionResponses, questionType)
+      summary: generateQuestionSummary(questionResponses, question.type)
     });
   });
 

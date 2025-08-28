@@ -41,22 +41,8 @@ const questionSchema = new Schema({
   },
   settings: {
     shuffleOptions: { type: Boolean, default: false },
-    allowOther: { type: Boolean, default: false },
-    select: { type: Boolean, default: true }
-  },
-  // Legacy fields for backward compatibility
-  name1: { type: String, default: "question" },
-  name2: { type: String, default: "description" },
-  multipleChoice: [{
-    index: Number,
-    value: String,
-    id: Number
-  }],
-  checkBoxes: [{
-    index: Number,
-    value: String,
-    id: Number
-  }]
+    allowOther: { type: Boolean, default: false }
+  }
 }, { timestamps: true });
 
 const formSchema = new mongoose.Schema(
@@ -77,28 +63,6 @@ const formSchema = new mongoose.Schema(
     },
     questions: {
       type: [questionSchema],
-      default: [
-        {
-          questionId: `q_${Date.now()}_default`,
-          type: "shortAnswer",
-          question: "",
-          description: "",
-          titlePlaceholder: "Question",
-          descriptionPlaceholder: "Description",
-          required: false,
-          settings: {
-            select: true
-          },
-          name1: "question",
-          name2: "description",
-          multipleChoice: [{ index: 68798, value: "", id: Date.now() }],
-          checkBoxes: [{ index: 156787, value: "", id: Date.now() }]
-        }
-      ]
-    },
-    // Keep legacy data field for backward compatibility
-    data: {
-      type: Array,
       default: []
     },
     settings: {

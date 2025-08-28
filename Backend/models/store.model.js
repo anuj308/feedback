@@ -26,32 +26,10 @@ const responseSchema = new mongoose.Schema(
     totalScore: { type: Number, default: 0 },
     submittedAt: { type: Date, default: Date.now },
     ipAddress: String,
-    userAgent: String,
-    // Legacy fields for backward compatibility
-    data: {
-      type: Object,
-      default: {}
-    },
-    Owner: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    },
-    formTitle: {
-      type: String
-    },
-    formDescription: {
-      type: String
-    },
-    feedbackUser: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-    }
+    userAgent: String
   },
   { timestamps: true }
 );
 
-// Alias for backward compatibility
-const formStoreSchema = responseSchema;
-
-export const Store = mongoose.model("Store", formStoreSchema);
+export const Store = mongoose.model("Store", responseSchema);
 export const Response = mongoose.model("Response", responseSchema);

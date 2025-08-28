@@ -12,7 +12,6 @@ import {
   updateFormSettings,
 } from "../controllers/form.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
-import { get } from "mongoose";
 
 const router = express.Router();
 

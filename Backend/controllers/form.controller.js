@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { Form } from "../models/from.model.js";
-import { Store, Response } from "../models/store.model.js";
+import { Store } from "../models/store.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
@@ -8,42 +8,49 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // admin
 const createForm = asyncHandler(async (req, res) => {
-  const { data, formTitle, formDescription } = req.body;
+  const { questions, formTitle, formDescription } = req.body;
 
-  if (!data && !headData && !formTitle && !formDescription) {
-    throw new ApiError(400, "data is required");
+  if (!questions && !formTitle && !formDescription) {
+    throw new ApiError(400, "Form data is required");
   }
+  
   const form = await Form.create({
-    data,
-    formTitle,
-    formDescription,
+    questions: questions || [],
+    formTitle: formTitle || "Untitled Form",
+    formDescription: formDescription || "No Description",
     Owner: req.user._id,
   });
+  
   if (!form) {
-    throw new ApiError(500, "something went wrong will creating form");
+    throw new ApiError(500, "Something went wrong while creating form");
   }
+  
   return res
     .status(200)
-    .json(new ApiResponse(200, { form }, "created form successfully"));
+    .json(new ApiResponse(200, { form }, "Created form successfully"));
 });
 const updateForm = asyncHandler(async (req, res) => {
-  const { data, formTitle, formDescription } = req.body;
+  const { questions, formTitle, formDescription } = req.body;
   const { formId } = req.params;
 
-  if (!data && !headData && !formTitle && !formDescription) {
-    throw new ApiError(400, "data is required");
+  if (!questions && !formTitle && !formDescription) {
+    throw new ApiError(400, "Form data is required");
   }
-  const form = await Form.findByIdAndUpdate(formId, {
-    data,
-    formTitle,
-    formDescription,
-  });
+  
+  const updateData = {};
+  if (questions) updateData.questions = questions;
+  if (formTitle) updateData.formTitle = formTitle;
+  if (formDescription) updateData.formDescription = formDescription;
+  
+  const form = await Form.findByIdAndUpdate(formId, updateData, { new: true });
+  
   if (!form) {
-    throw new ApiError(500, "something went wrong will updating form");
+    throw new ApiError(500, "Something went wrong while updating form");
   }
+  
   return res
     .status(200)
-    .json(new ApiResponse(200, { form }, "updated form successfully"));
+    .json(new ApiResponse(200, { form }, "Updated form successfully"));
 });
 
 const getForm = asyncHandler(async (req, res) => {
@@ -165,60 +172,39 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
     questions: []
   };
 
-  // Handle both new questions structure and legacy data structure
-  const questions = form.questions && form.questions.length > 0 ? form.questions : 
-    (form.data && form.data.length > 0 ? form.data : []);
+  // Process questions from the new structure
+  const questions = form.questions || [];
 
   analytics.questions = questions.map((question, index) => {
-    let questionId, questionText, questionType;
-    
-    // Handle new structure
-    if (question.questionId) {
-      questionId = question.questionId;
-      questionText = question.question;
-      questionType = question.type;
-    } 
-    // Handle legacy structure
-    else {
-      questionId = question.id || `legacy_${index}`;
-      questionText = question.data ? question.data.question : question.question || '';
-      questionType = question.data ? question.data.option : question.type || 'shortAnswer';
-    }
-
     const questionResponses = responses.map(response => {
-      // Try new structure first
       if (response.answers && Array.isArray(response.answers)) {
-        return response.answers.find(answer => answer.questionId === questionId);
-      }
-      // Fall back to legacy structure
-      else if (response.data && typeof response.data === 'object') {
-        return response.data[questionId] || response.data[`question_${index}`];
+        return response.answers.find(answer => answer.questionId === question.questionId);
       }
       return null;
     }).filter(Boolean);
 
     let questionAnalytics = {
-      questionId: questionId,
-      question: questionText,
-      type: questionType,
+      questionId: question.questionId,
+      question: question.question,
+      type: question.type,
       totalResponses: questionResponses.length,
-      responses: questionResponses.map(r => r.answer || r)
+      responses: questionResponses.map(r => r.answer)
     };
 
     // Add specific analytics based on question type
-    if (questionType === 'multipleChoice' || questionType === 'dropdown') {
+    if (question.type === 'multipleChoice' || question.type === 'dropdown') {
       const answerCounts = {};
       questionResponses.forEach(response => {
-        const answer = response.answer || response;
+        const answer = response.answer;
         answerCounts[answer] = (answerCounts[answer] || 0) + 1;
       });
       questionAnalytics.answerDistribution = answerCounts;
     }
 
-    if (questionType === 'checkboxes') {
+    if (question.type === 'checkboxes') {
       const optionCounts = {};
       questionResponses.forEach(response => {
-        const answer = response.answer || response;
+        const answer = response.answer;
         if (Array.isArray(answer)) {
           answer.forEach(option => {
             optionCounts[option] = (optionCounts[option] || 0) + 1;
@@ -251,7 +237,6 @@ const getFormResponses = asyncHandler(async (req, res) => {
 
   const responses = await Store.find({ formId })
     .populate('respondentUser', 'fullName email')
-    .populate('feedbackUser', 'fullName email')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
