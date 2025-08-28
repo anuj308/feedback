@@ -2,8 +2,8 @@ import React, { useContext, useState } from "react";
 import { Input } from "./index.js";
 import { useForms } from "../Context/StoreContext.jsx";
 
-const FormHead = () => {
-  const { onChangeHandler, headData } = useForms()
+const FormHead = ({onChangeHandler, headData }) => {
+  // const { onChangeHandler, headData } = useForms()
 
   return (
     <>

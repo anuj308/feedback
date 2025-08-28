@@ -10,4 +10,6 @@ import MultipeChoice from './MultipeChoice'
 import CheckBox from './CheckBox'
 import RenameCard from './RenameCard'
 import FormCard from './FormCard'
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard}
+import AdminIndividualCard from './AdminIndividualCard'
+import DataAdminCard from './DataAdminCard'
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard}

@@ -10,30 +10,30 @@ const CheckBox = ({
   forFormSurvey = false,
 }) => {
 
-  const [checkTrue,setCheckTrue]=useState({
-    id:check.id,
-    index:check.index,
-    value:check.value,
-    answer:true
-  })
-  const [checkFalse,setCheckFalse]=useState({
-    id:check.id,
-    index:check.index,
-    value:check.value,
-    answer:false
-  })
+  // const [checkTrue,setCheckTrue]=useState({
+  //   id:check.id,
+  //   index:check.index,
+  //   value:check.value,
+  //   answer:true
+  // })
+  // const [checkFalse,setCheckFalse]=useState({
+  //   id:check.id,
+  //   index:check.index,
+  //   value:check.value,
+  //   answer:false
+  // })
 
-  const [checkState,setCheckState]=useState(false)
+  // const [checkState,setCheckState]=useState(false)
 
-  const changeFunc =(event)=>{
-    if(checkState){
-      setCheckState(false)
-      change(event,checkFalse)
-    }else{
-      setCheckState(true)
-      change(event,checkTrue)
-    }
-  }
+  // const changeFunc =(event)=>{
+  //   if(checkState){
+  //     setCheckState(false)
+  //     change(event,checkFalse)
+  //   }else{
+  //     setCheckState(true)
+  //     change(event,checkTrue)
+  //   }
+  // }
   return (
     <>
       <div className="flex items-center mb-4 w-full">
@@ -42,7 +42,7 @@ const CheckBox = ({
          type="checkbox"
          name="answer"
          value={choice}
-         onClick={(event) => changeFunc(event)}
+         onClick={(event) => change(event)}
          className="w-4 h-4 border-gray-300 "
     
        />

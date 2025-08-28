@@ -20,13 +20,12 @@ const MultipeChoice = ({
          value={choice}
          onClick={(event) => change(event)}
          className="w-4 h-4 border-gray-300 "
-    
-       />
-        ) : (
-          <input
-            type="radio"
-            className="w-4 h-4 border-gray-300 "
-            readOnly
+         />
+         ) : (
+           <input
+           type="radio"
+           className="w-4 h-4 border-gray-300 "
+           readOnly
           />
         )}
 

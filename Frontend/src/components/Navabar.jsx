@@ -1,9 +1,11 @@
-import React, { useState, useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useForms } from "../Context/StoreContext";
 import axios from "axios";
+
 const Navabar = () => {
-  const { status, headData,cards,changeStatus, setUser } =useForms();
+  const { status, headData, cards, changeStatus, setUser, setHead, setCards } =
+    useForms();
   const [showDrop, setShowDrop] = useState(false);
   const navigate = useNavigate();
 
@@ -20,16 +22,34 @@ const Navabar = () => {
       localStorage.removeItem("token");
       localStorage.removeItem("userData");
       localStorage.removeItem("cards");
-      changeStatus(false)
-      navigate("/login")
+      changeStatus(false);
+      navigate("/login");
     }
   };
   const createFormFunc = async () => {
     try {
       const response = await axios.post("/api/v1/form/create", {
-        formTitle: headData.formTitle,
-        formDescription: headData.formDescription,
-        data: cards,
+        formTitle: "Untitled Form",
+        formDescription: "No Description",
+        data: [
+          {
+            data: {
+              id: 1232212,
+              question: "",
+              titlePlaceholder: "Question",
+              description: "",
+              descriptionPlaceholder: "Description",
+              option: "Shortanswer",
+              required: false,
+              select: true,
+              name1: "question",
+              name2: "description",
+            },
+            id: 1232212,
+            multipleChoice: [{ index: 68798, value: "", id: Date.now() }],
+            checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
+          },
+        ],
       });
       console.log(response);
       navigate(`/create/${response.data.data.form._id}`);
@@ -38,7 +58,6 @@ const Navabar = () => {
     }
   };
 
-  // useEffect(()=>{console.log(status)},[])
   return (
     <>
       <nav className="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">
@@ -47,7 +66,6 @@ const Navabar = () => {
             to="/"
             className="flex items-center space-x-3 rtl:space-x-reverse"
           >
-            {/* <img src="https://flowbite.com/docs/images/logo.svg" className="h-8" alt="Flowbite Logo"/> */}
             <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
               Forms
             </span>
@@ -96,38 +114,53 @@ const Navabar = () => {
           >
             <ul className="flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
               <li>
-                <Link
+                <NavLink
                   to="/"
-                  className="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500"
-                  aria-current="page"
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive ? "text-blue-700" : "text-white"
+                    } block py-2 px-3 rounded md:bg-transparent bg-gray-200  md:hover:bg-gray-800 md:p-2`
+                  }
                 >
                   Home
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link
+                <NavLink
                   to="/template"
-                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive ? "text-blue-700" : "text-white"
+                    } block py-2 px-3 rounded md:bg-transparent bg-gray-200  md:hover:bg-gray-800 md:p-2`
+                  }
                 >
                   template
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link
-                  // to="/createForm"
-                  onClick={()=> createFormFunc()}
-                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                <NavLink
+                  to="/createForm"
+                  onClick={() => createFormFunc()}
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive ? "text-blue-700" : "text-white"
+                    } block py-2 px-3 rounded md:bg-transparent bg-gray-200  md:hover:bg-gray-800 md:p-2`
+                  }
                 >
                   Create
-                </Link>
+                </NavLink>
               </li>
               <li>
-                <Link
+                <NavLink
                   to="/contact"
-                  className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 md:dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"
+                  className={({ isActive }) =>
+                    ` ${
+                      isActive ? "text-blue-700" : "text-white"
+                    } block py-2 px-3 rounded md:bg-transparent bg-gray-200  md:hover:bg-gray-800 md:p-2`
+                  }
                 >
                   Contact
-                </Link>
+                </NavLink>
               </li>
             </ul>
           </div>

@@ -16,10 +16,14 @@ const InputCard = ({
   name2,
   multipleChoiceC,
   checkBoxesC,
+  addCard,
+  updateCard,
+  deleteCard,
+  cards,
   card,
   ...props
 }) => {
-  const { cards, setCards, addCard, updateCard, deleteCard } = useForms();
+  // const { cards, setCards, addCard, updateCard, deleteCard } = useForms();
 
   const [options, setoptions] = useState([
     { option: "Short answer", optionValue: "Shortanswer" },
@@ -114,8 +118,12 @@ const InputCard = ({
     setData((prev) => ({ ...prev, required: !re }));
   };
 
-  const dataAll = { id: Date.now(), data,  multipleChoice: [{ index: 148798, value: "", id: Date.now() }],
-  checkBoxes: [{ index: 156787, value: "", id: Date.now() }],};
+  const dataAll = {
+    id: Date.now(),
+    data,
+    multipleChoice: [{ index: 148798, value: "", id: Date.now() }],
+    checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
+  };
   const dataAllUpdate = { id, data, multipleChoice, checkBoxes };
   const datadefaultAll = {
     data: datadefault,
@@ -131,10 +139,10 @@ const InputCard = ({
     updateCard(id, dataAllUpdate);
   };
 
-
   useEffect(() => {
-    updateCardFun()
-  }, [multipleChoice,checkBoxes,data]);
+    updateCardFun();
+    console.log(data)
+  }, [multipleChoice, checkBoxes, data]);
   // console.log(data)
 
   return (
@@ -213,10 +221,9 @@ const InputCard = ({
                       addMul({ index: multipleChoice.length + 1, value: "" })
                     }
                   >
-                    {"  "}
-                    Add option{" "}
-                  </span>{" "}
-                  or{" "}
+                    Add option
+                  </span>
+                  or
                   <span
                     onClick={() =>
                       addMul({
@@ -273,46 +280,44 @@ const InputCard = ({
       </div>
 
       {/* <div className="max-w-sm rounded overflow-hidden shadow-lg"> */}
-      <div className="px-6 pt-4 pb-2 flex flex-row space-x-3 flex-wrap mx-auto w-full ">
+      <div className="px-6 pt-4 pb-2 flex justify-end flex-row space-x-3 flex-wrap mx-auto w-full ">
         <div
           onClick={() => addCard(datadefaultAll)}
           className="bg-red-100 border rounded p-2 "
         >
-          add
+          <span className="material-symbols-outlined">add</span>
         </div>
         <div
           onClick={() => addCard(titleDescriptionDataAll)}
           className="bg-red-100 border rounded p-2 "
         >
-          title desc
+          <span className="material-symbols-outlined">title</span>
         </div>
         <div
           onClick={() => deleteCard(id)}
           className="bg-red-100 border rounded p-2 "
         >
-          Delete
+          <span className="material-symbols-outlined">delete</span>
         </div>
         <div
           onClick={() => addCard(dataAll)}
           className="bg-red-100 border rounded p-2 "
         >
-          Duplicate
+          <span className="material-symbols-outlined">content_copy</span>
         </div>
         <div className="bg-red-100 border rounded p-2 ">
-          <div>
-            <label className="inline-flex items-center mb-5 cursor-pointer">
-              <input
-                onClick={() => toogleReq()}
-                type="checkbox"
-                value=""
-                className="sr-only peer"
-              />
-              <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              <span className="ms-3 text-sm font-medium text-black ">
-                Required
-              </span>
-            </label>
-          </div>
+          <label className="inline-flex items-center mb-5 cursor-pointer">
+            <input
+              onClick={() => toogleReq()}
+              type="checkbox"
+              value=""
+              className="sr-only peer"
+            />
+            <span className=" text-sm m-1 font-medium text-black ">
+              Required
+            </span>
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:w-5 after:h-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          </label>
         </div>
         {card.select ? "" : (data.select = false)}
 

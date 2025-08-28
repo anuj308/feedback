@@ -117,6 +117,26 @@ const deleteForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { form }, "sucessfully deleted the form"));
 });
 
+const toogleResponses = asyncHandler(async (req, res) => {
+  const { formId} = req.params;
+
+  if (!formId) {
+    throw new ApiError(400, "id is required");
+  }  
+  
+  const form = await Form.findById(formId)
+  console.log(form.acceptingResponses)
+
+  if(form.acceptingResponses){
+    const formR = await Form.findByIdAndUpdate(formId,{acceptingResponses:false},{new:true})
+    res.status(200).json(new ApiResponse(200,formR,"Successfully changed accepting responses to false"))
+  }else{
+    const formR = await Form.findByIdAndUpdate(formId,{acceptingResponses:true},{new:true})
+    res.status(200).json(new ApiResponse(200,formR,"Successfully changed accepting responses to true"))
+  }
+});
+
+
 export {
   createForm,
   getForm,
@@ -124,4 +144,5 @@ export {
   renameForm,
   deleteForm,
   updateForm,
+  toogleResponses
 };

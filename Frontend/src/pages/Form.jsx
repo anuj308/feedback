@@ -16,10 +16,11 @@ const Form = () => {
     console.log(id, info);
     setCards((prev) => prev.map((card) => (card.id === id ? info : card)));
   };
-  const [save,setSave]=useState(false)
+  const [save, setSave] = useState(false);
 
-  const storeForm = async() => {
+  const storeForm = async () => {
     try {
+      console.log(  ownerId,formId)
       const response = await axios.post("/api/v1/store", {
         formTitle,
         formDescription,
@@ -28,7 +29,7 @@ const Form = () => {
         formId,
       });
       console.log(response);
-      navigate("/")
+      navigate("/");
       // make a page for like got your response etc
     } catch (error) {
       console.log("error while sending data to server", error);
@@ -43,9 +44,9 @@ const Form = () => {
         const response = await axios.get("/api/v1/form/f/" + fId);
         setformTitle(response.data.data.form.formTitle);
         setformdescription(response.data.data.form.formDescription);
-        setOwnerId(response.data.data.form.Owner)
+        setOwnerId(response.data.data.form.Owner);
         // console.log(response.data.data.form._id);
-        setFormId(response.data.data.form._id)
+        setFormId(response.data.data.form._id);
         setCards(response.data.data.form.data);
         console.log(response);
       } catch (error) {
@@ -61,24 +62,26 @@ const Form = () => {
 
   return (
     <>
-      <div className="mt-44  bg-slate-300 mx-64">
-        <div className="flex flex-col justify-center items-center">
-          <div className="m-3 w-full">
+      <div className="mx-auto w-1/2 mt-14 rounded overflow-hidden shadow-lg">
+          <div className="m-3 px-6 py-4">
+            <div className="text-xl mb-2">
+              <input
+                type="text"
+                className={`px-3 py-2 rounded-lg bg-white text-black outline-none focus:bg-gray-50 duration-200  border-gray-200 w-full`}
+                value={formTitle}
+                disabled
+                readOnly
+              />
+            </div>
             <input
               type="text"
-              className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor`}
-              value={formTitle}
-              disabled
-              readOnly
-            />
-            <input
-              type="text"
-              className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor`}
+              className={`px-3 py-2 rounded-lg bg-white text-black outline-none focus:bg-gray-50 duration-200  border-gray-200 w-full`}
               value={formDescription}
               disabled
               readOnly
             />
           </div>
+        <div className="flex flex-col justify-center items-center">
 
           <div className="m-3 w-full p-1">
             {cards.map((card, index) => {

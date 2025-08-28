@@ -100,7 +100,8 @@ const FormCard = ({
                 <div key={check.index} className="m-1 w-full">
                   <CheckBox
                     check={check}
-                    change={checkAnsFunc}
+                    // change={checkAnsFunc}
+                    change={onChangeHandler}
                     id={check.id}
                     choice={check.value}
                     forFormSurvey={true}

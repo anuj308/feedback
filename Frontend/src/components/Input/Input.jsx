@@ -1,5 +1,5 @@
 import React, { useId } from "react";
-import "./Input.css";
+
 const Input = ({
   label,
   type = "text",
