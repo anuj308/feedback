@@ -5,34 +5,30 @@ import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
 
 const Login = () => {
-  const { changeStatus, status, cards, url, userData, setUser } = useForms();
+  const { login, isAuthenticated } = useForms();
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
-  const login = async (data) => {
-    console.log("🔐 Attempting login with data:", { email: data.email, password: "[HIDDEN]" });
+  
+  const handleLogin = async (data) => {
+    console.log("🔐 Attempting login");
     setError("");
-    try {
-      const response = await api.post(endpoints.auth.login, data);
-      console.log("✅ Login successful");
-      console.log("👤 User data:", response.data.data.user);
-      
-      // Store user data
-      localStorage.setItem("token", response.data.data.accessToken);
-      localStorage.setItem("userData", JSON.stringify(response.data.data.user));
-      
-      changeStatus(true);
+    
+    const result = await login(data);
+    
+    if (result.success) {
       navigate("/");
-    } catch (error) {
-      console.error("❌ Login failed:", error);
-      setError(error.response?.data?.message || error.message || "Login failed");
+    } else {
+      setError(result.error);
     }
   };
+  
   useEffect(() => {
-    if (status) {
+    // If already authenticated, redirect to home
+    if (isAuthenticated) {
       navigate("/");
     }
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   return (
     <>
@@ -55,7 +51,7 @@ const Login = () => {
               )}
               <form
                 className="space-y-4 md:space-y-6"
-                onSubmit={handleSubmit(login)}
+                onSubmit={handleSubmit(handleLogin)}
               >
                 <div>
                   <label

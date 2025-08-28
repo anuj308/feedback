@@ -1,16 +1,40 @@
 import { api, endpoints } from "../utils/api";
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { AdminIndividualCard, DataAdminCard } from "../components";
+import { useForms } from "../Context/StoreContext";
 
 const Admin = () => {
   const { fId: formId } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useForms();
+  
   const [dropdown, setDropDown] = useState(false);
   const [selectOption, setSelectOption] = useState("summary");
   const [analytics, setAnalytics] = useState(null);
   const [responses, setResponses] = useState([]);
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("🔐 Not authenticated, redirecting to login");
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear admin data when user is no longer authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("🧹 User not authenticated, clearing admin data");
+      setAnalytics(null);
+      setResponses([]);
+      setForm(null);
+      setDropDown(false);
+      setSelectOption("summary");
+    }
+  }, [isAuthenticated]);
 
   const toggleResponse = async () => {
     console.log("🔄 Toggling form responses for formId:", formId);

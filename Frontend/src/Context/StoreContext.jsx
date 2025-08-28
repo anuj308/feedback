@@ -1,20 +1,19 @@
 import { createContext, useContext } from "react";
 
 export const FormContext = createContext({
-  status: false,
-  changeStatus: () => {},
-  questions: [],
-  setQuestions: () => {},
-  token: "",
+  isAuthenticated: false,
   userData: {},
   setUser: () => {},
-  headData: {},
-  addQuestion: (info) => {},
-  updateQuestion: (id, info) => {},
-  deleteQuestion: () => {},
-  createForm: () => {},
-  onChangeHandler: () => {},
-  setHead: () => {},
+  login: async () => {},
+  logout: async () => {},
+  checkAuthStatus: async () => {},
+  resetAppState: () => {},
+  isLoading: false,
+  // Legacy support (gradually remove these)
+  status: false,
+  token: "",
+  changeStatus: () => {},
+  updateToken: () => {},
 });
 
 export const useForms = () => {

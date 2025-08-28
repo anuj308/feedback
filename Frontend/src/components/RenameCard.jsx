@@ -8,6 +8,7 @@ const RenameCard = ({
   formTitle,
   onChangeHandlerRename,
   setAllForms,
+  userData,
 }) => {
   // console.log(cancel,cancelState)
   const onOk = async () => {
@@ -17,7 +18,7 @@ const RenameCard = ({
       });
       console.log(response);
       const func = async () => {
-        const response = await api.get(endpoints.forms.getAll);
+        const response = await api.get(endpoints.forms.getByOwner(userData._id));
         setAllForms(response.data.data.form);
         // console.log(response.data.data.form);
       };

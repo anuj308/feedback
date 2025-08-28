@@ -49,26 +49,34 @@ api.interceptors.response.use(
     const endTime = new Date();
     const duration = error.config?.metadata ? endTime - error.config.metadata.startTime : 'unknown';
     
-    console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${duration}ms)`);
-    console.error('💥 Error details:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        method: error.config?.method,
-        url: error.config?.url,
-        data: error.config?.data,
-      }
-    });
+    // Don't log auth check failures as errors (they're expected when not logged in)
+    const isAuthCheck = error.config?.url?.includes('/user/current-user');
+    const is401 = error.response?.status === 401;
+    
+    if (isAuthCheck && is401) {
+      console.log(`🔍 Auth check: No valid session found`);
+    } else {
+      console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${duration}ms)`);
+      console.error('💥 Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          method: error.config?.method,
+          url: error.config?.url,
+          data: error.config?.data,
+        }
+      });
+    }
 
     // Handle specific error cases
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isAuthCheck) {
       console.warn('🔐 Unauthorized - redirecting to login');
       // Clear any stored auth data
       localStorage.removeItem('token');
       localStorage.removeItem('userData');
-      // Redirect to login page
+      // Only redirect if it's not the initial auth check
       window.location.href = '/login';
     }
 
@@ -150,6 +158,7 @@ export const endpoints = {
   // Form endpoints
   forms: {
     create: '/form/create',
+    getAll: '/form',
     getById: (id) => `/form/f/${id}`,
     update: (id) => `/form/f/${id}`,
     delete: (id) => `/form/f/${id}`,

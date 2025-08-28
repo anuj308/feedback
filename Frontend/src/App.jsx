@@ -10,12 +10,139 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FormProvider } from "./Context/StoreContext";
 import Form from "./pages/Form";
 import Admin from "./pages/Admin";
-import api from "./utils/api";
+import { api, endpoints } from "./utils/api";
 
 function App() {
-  const token = localStorage.getItem("token");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState({});
 
-  // Initialize API instance (it's already configured in utils/api.js)
+  // Check authentication status on app load
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    console.log("� Checking authentication status...");
+    setIsLoading(true);
+    
+    try {
+      // Call your auth check API endpoint
+      const response = await api.get(endpoints.auth.currentUser);
+      
+      // Check for success (handle both 'Success' and 'success' properties)
+      const isSuccess = response.data.Success || response.data.success || response.status === 200;
+      
+      if (isSuccess && response.data.data) {
+        console.log("✅ User is authenticated");
+        console.log("👤 User data:", response.data.data);
+        
+        setIsAuthenticated(true);
+        setUserData(response.data.data);
+        localStorage.setItem("userData", JSON.stringify(response.data.data));
+      } else {
+        console.log("❌ User not authenticated - invalid response format");
+        handleAuthFailure();
+      }
+    } catch (error) {
+      // Handle different error scenarios
+      if (error.response?.status === 401) {
+        console.log("🚪 No valid authentication - user needs to login");
+      } else if (error.response?.status) {
+        console.log("❌ Auth check failed with status:", error.response.status);
+      } else {
+        console.log("❌ Auth check failed - network or server issue:", error.message);
+      }
+      handleAuthFailure();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAuthFailure = () => {
+    console.log("🧹 Clearing all application data...");
+    
+    // Clear authentication state
+    setIsAuthenticated(false);
+    setUserData({});
+    
+    // Clear all localStorage data
+    localStorage.removeItem("userData");
+    localStorage.removeItem("token"); // Remove any old localStorage tokens
+    localStorage.removeItem("cards"); // Remove any old form cards
+    localStorage.removeItem("questions"); // Remove any form questions
+    localStorage.removeItem("formData"); // Remove any form data
+    
+    // Clear any other localStorage items that might contain user data
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // Remove any keys that might contain user-specific data
+      if (key && (key.includes('form') || key.includes('user') || key.includes('auth'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    
+    console.log("✅ All application data cleared");
+  };
+
+  const login = async (credentials) => {
+    try {
+      const response = await api.post(endpoints.auth.login, credentials);
+      
+      // Check for success (handle both 'Success' and 'success' properties)
+      const isSuccess = response.data.Success || response.data.success || response.status === 200;
+      
+      if (isSuccess && response.data.data) {
+        console.log("✅ Login successful");
+        console.log("👤 User data:", response.data.data);
+        
+        setIsAuthenticated(true);
+        setUserData(response.data.data);
+        localStorage.setItem("userData", JSON.stringify(response.data.data));
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          error: "Invalid response from server" 
+        };
+      }
+    } catch (error) {
+      console.error("❌ Login failed:", error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || "Login failed" 
+      };
+    }
+  };
+
+  const logout = async () => {
+    console.log("🚪 Logging out user...");
+    try {
+      await api.post(endpoints.auth.logout);
+      console.log("✅ Logout API call successful");
+    } catch (error) {
+      console.error("❌ Logout API error:", error);
+    } finally {
+      // Always clear data regardless of API success/failure
+      handleAuthFailure();
+    }
+  };
+
+  // Function to reset all application state (for logout)
+  const resetAppState = () => {
+    console.log("🔄 Resetting application state...");
+    // This can be called by components to reset their local state
+    // Components should listen to isAuthenticated changes and reset themselves
+  };
+
+  const setUser = (data) => {
+    console.log("👤 Updating user data:", data);
+    setUserData(data);
+  };
+
+  // Initialize API instance
   useEffect(() => {
     console.log("🚀 App initialized with API configuration");
     console.log("🔧 Environment:", {
@@ -25,23 +152,17 @@ function App() {
     });
   }, []);
 
-  const [userData, setUserData] = useState({});
-
-  const setUser = (data) => {
-    console.log(data)
-    setUserData(data);
-  };
-
-  useEffect(() => {
-    console.log(userData)
-  }, [userData])
-  
-
-  const [status, setStatus] = useState(false);
-
-  const changeStatus = (data) => {
-    setStatus(data);
-  };
+  // Show loading spinner while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // const [cards, setcards] = useState([
   //   {
@@ -114,19 +235,14 @@ function App() {
   return (
     <FormProvider
       value={{
-        // cards,
-        // headData,
-        token,
-        status,
-        // addCard,
-        // deleteCard,
-        // updateCard,
+        isAuthenticated,
         userData,
-        // onChangeHandler,
-        // setHead,
-        // setCards,
         setUser,
-        changeStatus,
+        login,
+        logout,
+        checkAuthStatus,
+        resetAppState,
+        isLoading,
       }}
     >
       <BrowserRouter>

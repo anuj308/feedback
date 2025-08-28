@@ -8,9 +8,27 @@ import Admin from "./Admin";
 const CreateForm = () => {
   const navigate = useNavigate();
   const { fId } = useParams();
+  const { isAuthenticated } = useForms();
 
   const [questions, setQuestions] = useState([]);
   const [headData, setHeadData] = useState({});
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("🔐 Not authenticated, redirecting to login");
+      navigate('/login');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear form data when user is no longer authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("🧹 User not authenticated, clearing form data");
+      setQuestions([]);
+      setHeadData({});
+    }
+  }, [isAuthenticated]);
 
   // Helper function to create a new question
   const createNewQuestion = () => ({

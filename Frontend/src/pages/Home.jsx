@@ -7,14 +7,31 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   const [allForms, setAllForms] = useState([]);
   const navigate = useNavigate();
-  const c = localStorage.getItem("userData");
-  const userData = JSON.parse(c);
   const {
-    token,
+    isAuthenticated,
+    userData: contextUserData,
     setHead,
   } = useForms();
+  
+  // Use userData from context (more reliable) or fallback to localStorage
+  const userData = contextUserData || (() => {
+    try {
+      const stored = localStorage.getItem("userData");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  })();
   const [showRename, setShowRename] = useState(false);
-  const [status, setStatus] = useState(false);
+
+  // Clear forms data when user is no longer authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      console.log("🧹 User not authenticated, clearing forms data");
+      setAllForms([]);
+      setShowRename(false);
+    }
+  }, [isAuthenticated]);
   const deleteForm = async (id) => {
     console.log("🗑️ Deleting form:", id);
     try {
@@ -30,7 +47,7 @@ const Home = () => {
   };
 
   const toCreate = () => {
-    if (status === false) {
+    if (!isAuthenticated) {
       navigate("/login");
     } else {
       navigate("/create");
@@ -60,23 +77,31 @@ const Home = () => {
   }
 
   useEffect(() => {
-    try {
-      const func = async () => {
+    const fetchForms = async () => {
+      if (!isAuthenticated || !userData?._id) {
+        console.log("⏭️ Skipping form fetch - user not authenticated or userData missing");
+        return;
+      }
+
+      try {
         console.log("📋 Fetching forms for user:", userData._id);
         const response = await api.get(endpoints.forms.getByOwner(userData._id));
         console.log("📄 Forms loaded:", response.data.data.form.length, "forms");
         setAllForms(response.data.data.form);
-      };
-      if (token) {
-        setStatus(true);
-        if (allForms.length === 0) {
-          func();
+      } catch (error) {
+        console.error("❌ Error while fetching all forms:", error);
+        // If it's an auth error, the user might need to log in again
+        if (error.response?.status === 401) {
+          setAllForms([]); // Clear forms on auth error
         }
       }
-    } catch (error) {
-      console.error("❌ Error while fetching all forms:", error);
+    };
+
+    // Only fetch if authenticated and we don't already have forms (unless refreshing)
+    if (isAuthenticated && userData?._id && allForms.length === 0) {
+      fetchForms();
     }
-  }, [showRename]);
+  }, [showRename, isAuthenticated, userData]);
   return (
     <>
       {showRename && (
@@ -88,6 +113,7 @@ const Home = () => {
             onChangeHandlerRename={onChangeHandlerRename}
             formRenameId={formRenameId}
             setAllForms={setAllForms}
+            userData={userData}
             className="m-44 border bg-white rounded-lg p-7 shadow-md"
           />
         </div>

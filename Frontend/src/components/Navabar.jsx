@@ -4,29 +4,16 @@ import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
 
 const Navabar = () => {
-  const { status, headData, cards, changeStatus, setUser, setHead, setCards } =
-    useForms();
+  const { isAuthenticated, logout } = useForms();
   const [showDrop, setShowDrop] = useState(false);
   const navigate = useNavigate();
 
-  const logoutbtn = async () => {
+  const handleLogout = async () => {
     console.log("🚪 Logging out user");
-    try {
-      const response = await api.post(endpoints.auth.logout);
-      console.log("✅ Logout successful");
-      localStorage.removeItem("token");
-      changeStatus(false);
-      setUser({});
-      navigate("/");
-    } catch (error) {
-      console.error("❌ Error on logout:", error);
-      localStorage.removeItem("token");
-      localStorage.removeItem("userData");
-      localStorage.removeItem("cards");
-      changeStatus(false);
-      navigate("/login");
-    }
+    await logout();
+    navigate("/");
   };
+
   const createFormFunc = async () => {
     try {
       const response = await api.post(endpoints.forms.create, {
@@ -72,9 +59,9 @@ const Navabar = () => {
             </span>
           </Link>
           <div className="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-            {status ? (
+            {isAuthenticated ? (
               <button
-                onClick={logoutbtn}
+                onClick={handleLogout}
                 type="button"
                 className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
               >
