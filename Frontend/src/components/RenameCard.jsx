@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 const RenameCard = ({
   className = "",
   cancelState,
@@ -12,12 +12,12 @@ const RenameCard = ({
   // console.log(cancel,cancelState)
   const onOk = async () => {
     try {
-      const response = await axios.patch("/api/v1/form/f/" + formRenameId, {
+      const response = await api.patch(endpoints.forms.update(formRenameId), {
         formTitle,
       });
       console.log(response);
       const func = async () => {
-        const response = await axios.get("/api/v1/form");
+        const response = await api.get(endpoints.forms.getAll);
         setAllForms(response.data.data.form);
         // console.log(response.data.data.form);
       };

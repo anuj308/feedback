@@ -2,7 +2,7 @@ import React,{useContext,useState,useEffect} from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useForms} from "../Context/StoreContext";
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 // import { ProfilePicture } from "../components";
 
 const SignUp = () => {
@@ -12,21 +12,23 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   const create = async (data) => {
+    console.log("📝 Attempting registration with data:", { 
+      email: data.email, 
+      fullName: data.fullName,
+      password: "[HIDDEN]" 
+    });
     setError("");
     try {
-       const newurl= `/api/v1/user/register`
-        const response = await axios.post(newurl,data);
-        setUser(response.data.data)
-        console.log(response.data.data)
-            changeStatus(true);
-            navigate("/")
-    //   if (userData) {
-    //     const userData = await authService.getCurrentUser();
-    //     if (userData) dispatch(authLogin(userData));
-    //     naviagte("/");
-    //   }
+      const response = await api.post(endpoints.auth.register, data);
+      console.log("✅ Registration successful");
+      console.log("👤 User data:", response.data.data);
+      
+      setUser(response.data.data);
+      changeStatus(true);
+      navigate("/");
     } catch (error) {
-      setError(error.message);
+      console.error("❌ Registration failed:", error);
+      setError(error.response?.data?.message || error.message || "Registration failed");
     }
   };
 

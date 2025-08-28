@@ -1,36 +1,45 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { Button, FormHead, InputCard } from "../components/index";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate, useParams, useLoaderData } from "react-router-dom";
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 import Admin from "./Admin";
-const CreateForm = () => {
-  // const { status, headData, setHead, cards, setCards, createFormFunc } =
-  //   useForms();
 
+const CreateForm = () => {
   const navigate = useNavigate();
   const { fId } = useParams();
 
-  const [cards, setcards] = useState([]);
-
+  const [questions, setQuestions] = useState([]);
   const [headData, setHeadData] = useState({});
 
-  const setCards = (data) => {
-    setcards(data);
-  };
+  // Helper function to create a new question
+  const createNewQuestion = () => ({
+    questionId: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: "shortAnswer",
+    question: "",
+    description: "",
+    titlePlaceholder: "Question", 
+    descriptionPlaceholder: "Description",
+    required: false,
+    options: []
+  });
 
-  const addCard = (info) => {
-    setcards((prev) => [...prev, { id: Date.now(), ...info }]);
-  };
+  const addQuestion = useCallback((info) => {
+    const newQuestion = { ...createNewQuestion(), ...info };
+    setQuestions((prev) => [...prev, newQuestion]);
+  }, []);
 
-  const updateCard = (id, info) => {
-    setcards((prev) => prev.map((card) => (card.id === id ? info : card)));
-    // console.log(cards);
-  };
-  const deleteCard = (id) => {
-    console.log(id);
-    setcards((prev) => prev.filter((card) => card.id != id));
-  };
+  const updateQuestion = useCallback((questionId, info) => {
+    setQuestions((prev) => 
+      prev.map((question) => 
+        question.questionId === questionId ? { ...question, ...info } : question
+      )
+    );
+  }, []);
+
+  const deleteQuestion = useCallback((questionId) => {
+    setQuestions((prev) => prev.filter((question) => question.questionId !== questionId));
+  }, []);
 
   const setHead = (info) => {
     setHeadData(info);
@@ -42,42 +51,74 @@ const CreateForm = () => {
     setHeadData((prev) => ({ ...prev, [name]: value }));
   };
 
-
   const updateForm = async () => {
-    const response = await axios.post("/api/v1/form/f/" + fId, {
-      formTitle: headData.formTitle,
-      formDescription: headData.formDescription,
-      data: cards,
-    });
-    console.log("updated form", response);
-    localStorage.removeItem("cards");
-    setHead({
-      formTitle: "Untitled Form",
-      formDescription: "No Description",
-    });
-    navigate("/");
+    console.log("💾 Updating form:", { formId: fId, questionsCount: questions.length });
+    try {
+      const response = await api.post(endpoints.forms.update(fId), {
+        formTitle: headData.formTitle,
+        formDescription: headData.formDescription,
+        questions: questions,
+      });
+      console.log("✅ Form updated successfully");
+      localStorage.removeItem("questions");
+      setHead({
+        formTitle: "Untitled Form",
+        formDescription: "No Description",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("❌ Error updating form:", error);
+    }
   };
 
-  const [page, setPage] = useState("create")
+  const [page, setPage] = useState("create");
 
   useEffect(() => {
     const func = async () => {
+      console.log("📖 Loading form data for formId:", fId);
       try {
-        const response = await axios.get("/api/v1/form/f/" + fId);
-        setHead({
-          formTitle: response.data.data.form.formTitle,
-          formDescription: response.data.data.form.formDescription,
+        const response = await api.get(endpoints.forms.getById(fId));
+        const form = response.data.data.form;
+        
+        console.log("📄 Form loaded:", { 
+          title: form.formTitle, 
+          questionsCount: form.questions?.length || 0 
         });
-        setCards(response.data.data.form.data);
-        localStorage.setItem("cards", JSON.stringify(response.data.data.form.data));
-        console.log(response.data.data.form.data)
+        
+        setHead({
+          formTitle: form.formTitle,
+          formDescription: form.formDescription,
+        });
+        
+        // Use new questions structure only
+        if (form.questions && form.questions.length > 0) {
+          setQuestions(form.questions);
+        } else {
+          // Initialize with one empty question if no questions exist
+          setQuestions([createNewQuestion()]);
+        }
+        
+        localStorage.setItem("questions", JSON.stringify(form.questions || []));
       } catch (error) {
-        console.log("error while fetching the create form", error);
+        console.log("Error while fetching the create form", error);
+        // Initialize with one empty question on error
+        setQuestions([createNewQuestion()]);
       }
     };
     func();
-    console.log(cards, "log")
   }, []);
+
+  // Helper function to extract options from legacy structure
+  const extractOptions = (legacyItem) => {
+    const options = [];
+    if (legacyItem.multipleChoice) {
+      options.push(...legacyItem.multipleChoice.map(mc => mc.value).filter(v => v));
+    }
+    if (legacyItem.checkBoxes) {
+      options.push(...legacyItem.checkBoxes.map(cb => cb.value).filter(v => v));
+    }
+    return options;
+  };
 
   return (
     <div>
@@ -90,43 +131,50 @@ const CreateForm = () => {
         </div>
       </div>
       {
-        page === "create" ? (<div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg ">
-          <FormHead headData={headData} onChangeHandler={onChangeHandler} />
-          <div className="my-8 ">
-            {cards.map((card, index) => {
-              console.log(card);
-              return (
-                <div key={index}>
-                  <InputCard
-                    card={card.data}
-                    question={card.data.question}
-                    option={card.data.option}
-                    titlePlaceholder={card.data.titlePlaceholder}
-                    description={card.data.description}
-                    descriptionPlaceholder={card.data.descriptionPlaceholder}
-                    className={card.data.className}
-                    id={card.id}
-                    required={card.data.required}
-                    name1={card.data.name1}
-                    name2={card.data.name2}
-                    select={card.data.select}
-                    multipleChoiceC={card.multipleChoice}
-                    checkBoxesC={card.checkBoxes}
-                    addCard={addCard}
-                    updateCard={updateCard}
-                    deleteCard={deleteCard}
-                    cards={cards}
-                  />
-                </div>
-              );
-            })}
+        page === "create" ? (
+          <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg ">
+            <FormHead headData={headData} onChangeHandler={onChangeHandler} />
+            <div className="my-8 ">
+              {questions.map((question, index) => {
+                return (
+                  <div key={question.questionId}>
+                    <InputCard
+                      question={question}
+                      questionId={question.questionId}
+                      type={question.type}
+                      questionText={question.question}
+                      description={question.description}
+                      titlePlaceholder={question.titlePlaceholder}
+                      descriptionPlaceholder={question.descriptionPlaceholder}
+                      required={question.required}
+                      options={question.options || []}
+                      addQuestion={addQuestion}
+                      updateQuestion={updateQuestion}
+                      deleteQuestion={deleteQuestion}
+                      questions={questions}
+                    />
+                  </div>
+                );
+              })}
+              
+              {/* Add new question button */}
+              <div className="mx-auto md:w-1/2 mt-4">
+                <Button 
+                  onClick={() => addQuestion(createNewQuestion())} 
+                  className="w-full mb-4 bg-blue-500 hover:bg-blue-600"
+                >
+                  Add Question
+                </Button>
+              </div>
+            </div>
+            <Button onClick={() => updateForm()} className="flex">
+              Done
+            </Button>
           </div>
-          <Button onClick={() => updateForm()} className="flex">
-            Done
-          </Button>
-        </div>) : (<Admin formId={fId} />)
+        ) : (
+          <Admin formId={fId} />
+        )
       }
-
     </div>
   );
 };

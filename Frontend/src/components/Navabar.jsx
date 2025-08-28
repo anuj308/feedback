@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useForms } from "../Context/StoreContext";
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 
 const Navabar = () => {
   const { status, headData, cards, changeStatus, setUser, setHead, setCards } =
@@ -10,15 +10,16 @@ const Navabar = () => {
   const navigate = useNavigate();
 
   const logoutbtn = async () => {
+    console.log("🚪 Logging out user");
     try {
-      const response = await axios.post("/api/v1/user/logout");
-      console.log(response);
+      const response = await api.post(endpoints.auth.logout);
+      console.log("✅ Logout successful");
       localStorage.removeItem("token");
       changeStatus(false);
       setUser({});
       navigate("/");
     } catch (error) {
-      console.log("error on logout", error);
+      console.error("❌ Error on logout:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("userData");
       localStorage.removeItem("cards");
@@ -28,7 +29,7 @@ const Navabar = () => {
   };
   const createFormFunc = async () => {
     try {
-      const response = await axios.post("/api/v1/form/create", {
+      const response = await api.post(endpoints.forms.create, {
         formTitle: "Untitled Form",
         formDescription: "No Description",
         data: [

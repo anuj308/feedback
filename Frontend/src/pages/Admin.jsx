@@ -1,47 +1,93 @@
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 import React, { useEffect, useState } from "react";
-import { AdminIndividualCard, DataAdminCard, FormCard } from "../components";
-import Form from './Form.jsx'
+import { useParams } from "react-router-dom";
+import { AdminIndividualCard, DataAdminCard } from "../components";
 
-const Admin = ({ formId }) => {
+const Admin = () => {
+  const { fId: formId } = useParams();
   const [dropdown, setDropDown] = useState(false);
   const [selectOption, setSelectOption] = useState("summary");
-  const [store, setStore] = useState([]);
-  const [StoreForm, setStoreForm] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [responses, setResponses] = useState([]);
+  const [form, setForm] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-
-  const toogleResponse = async()=>{
+  const toggleResponse = async () => {
+    console.log("🔄 Toggling form responses for formId:", formId);
     try {
-      const response = await axios.get('/api/v1/form/admin/'+formId);
-      console.log(response.data.message)
+      const response = await api.patch(endpoints.forms.settings(formId), {
+        acceptingResponses: !form?.settings?.acceptingResponses
+      });
+      console.log("✅ Form settings updated successfully");
+      // Refresh form data
+      fetchFormData();
     } catch (error) {
-      console.log(error)
+      console.error("❌ Error updating form settings:", error);
     }
-  }
-  console.log(store)
+  };
+
+  const fetchFormData = async () => {
+    console.log("📖 Fetching form data for formId:", formId);
+    try {
+      const formResponse = await api.get(endpoints.forms.getById(formId));
+      console.log("📄 Form data loaded:", formResponse.data.data.form.formTitle);
+      setForm(formResponse.data.data.form);
+    } catch (error) {
+      console.error("❌ Error fetching form:", error);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    console.log("📊 Fetching analytics for formId:", formId);
+    try {
+      const analyticsResponse = await api.get(endpoints.forms.analytics(formId));
+      console.log("📈 Analytics loaded:", analyticsResponse.data.data);
+      setAnalytics(analyticsResponse.data.data);
+    } catch (error) {
+      console.error("❌ Error fetching analytics:", error);
+    }
+  };
+
+  const fetchResponses = async () => {
+    console.log("📋 Fetching responses for formId:", formId);
+    try {
+      const responsesResponse = await api.get(endpoints.forms.responses(formId));
+      console.log("📝 Responses loaded:", responsesResponse.data.data.length, "responses");
+      setResponses(responsesResponse.data.data);
+    } catch (error) {
+      console.error("❌ Error fetching responses:", error);
+    }
+  };
 
   useEffect(() => {
-    const func = async () => {
-      try {
-        const response = await axios.get("/api/v1/store/f/" + formId);
-        console.log(response);
-        setStore(response.data.data);
-        // console.log(response.data.data)
-        // console.log(store)
-        // console.log(response.data.data)
-      } catch (error) {
-        console.log(error, formId);
-      }
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchFormData(),
+        fetchAnalytics(),
+        fetchResponses()
+      ]);
+      setLoading(false);
     };
-    func();
-    console.log(StoreForm)
-  }, [StoreForm]);
+    
+    if (formId) {
+      loadData();
+    }
+  }, [formId]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-1/2 mt-28 rounded overflow-hidden shadow-lg">
+        <div className="text-center p-8">Loading analytics...</div>
+      </div>
+    );
+  }
   return (
-    <div classNameName="mx-auto w-1/2 mt-28  rounded overflow-hidden shadow-lg">
-      <div className=" my-8  mt-32 text-white mx-auto w-1/2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex px-4 pt-4  flex-row justify-between">
+    <div className="mx-auto w-1/2 mt-28 rounded overflow-hidden shadow-lg">
+      <div className="my-8 mt-32 text-white mx-auto w-1/2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+        <div className="flex px-4 pt-4 flex-row justify-between">
           <h5 className="mb-1 text-xl font-medium text-gray-900 dark:text-white">
-            {store.length} responses
+            {analytics?.totalResponses || 0} responses
           </h5>
           <div>
             <button
@@ -96,8 +142,13 @@ const Admin = ({ formId }) => {
           </div>
         </div>
         <div className="text-white px-4 pt-4 flex justify-end">
-          <label className="inline-flex items-center cursor-pointer" >
-            <input type="checkbox" class="sr-only peer" onClick={()=> toogleResponse()}/>
+          <label className="inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={form?.settings?.acceptingResponses || false}
+              onChange={toggleResponse}
+            />
             <span className="me-3 text-sm font-medium text-gray-900 dark:text-gray-300">
               Accepting responses
             </span>
@@ -153,19 +204,46 @@ const Admin = ({ formId }) => {
               } p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800`}
               id="about"
             >
-              {/* {store.map((s) => {
-                s.map((st) => {
-                  <FormCard
-                    card={st.data}
-                    id={st.id}
-                    question={st.data.question}
-                    description={st.data.description}
-                    option={st.data.option}
-                    multipleChoice={st.multipleChoice}
-                    checkBoxes={st.checkBoxes}
-                  />;
-                });
-              })} */}
+              {analytics && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-blue-900">Total Responses</h3>
+                      <p className="text-2xl font-bold text-blue-600">{analytics.totalResponses}</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-green-900">Completion Rate</h3>
+                      <p className="text-2xl font-bold text-green-600">{analytics.completionRate}%</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <h3 className="text-lg font-semibold text-purple-900">Average Score</h3>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {analytics.averageScore ? `${analytics.averageScore.toFixed(1)}%` : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {analytics.questionStats && analytics.questionStats.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Question Statistics</h3>
+                      <div className="space-y-4">
+                        {analytics.questionStats.map((stat, index) => (
+                          <div key={index} className="border border-gray-200 rounded-lg p-4">
+                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                              {stat.question}
+                            </h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                              Responses: {stat.responseCount} | 
+                              {stat.correctPercentage !== undefined && 
+                                ` Correct: ${stat.correctPercentage.toFixed(1)}%`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div
               className={`${
@@ -174,47 +252,69 @@ const Admin = ({ formId }) => {
               id="services"
             >
               <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-                We tial
+                Question Analysis
               </h2>
-              
+              {analytics?.questionStats && analytics.questionStats.length > 0 ? (
+                <div className="space-y-6">
+                  {analytics.questionStats.map((stat, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                        Question {index + 1}: {stat.question}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">Total Responses</p>
+                          <p className="text-xl font-bold text-blue-600">{stat.responseCount}</p>
+                        </div>
+                        {stat.correctPercentage !== undefined && (
+                          <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Correct Answers</p>
+                            <p className="text-xl font-bold text-green-600">{stat.correctPercentage.toFixed(1)}%</p>
+                          </div>
+                        )}
+                      </div>
+                      {stat.answerDistribution && Object.keys(stat.answerDistribution).length > 0 && (
+                        <div>
+                          <p className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Answer Distribution:</p>
+                          <div className="space-y-2">
+                            {Object.entries(stat.answerDistribution).map(([answer, count]) => (
+                              <div key={answer} className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600 dark:text-gray-300">{answer}</span>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">{count} responses</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-300">No question data available.</p>
+              )}
             </div>
             <div
               className={`${
                 selectOption === "individual" ? "" : "hidden"
               } p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800`}
             >
-              {
-                store.map((s)=>(
-                  <AdminIndividualCard s={s} setStoreForm={setStoreForm} name={s.owner.fullName}/>
-                ))
-              }
+              {responses && responses.length > 0 ? (
+                <div className="space-y-4">
+                  {responses.map((response, index) => (
+                    <AdminIndividualCard 
+                      key={response._id} 
+                      s={response} 
+                      name={response.owner?.fullName || 'Anonymous'}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-300">No individual responses available.</p>
+              )}
             </div>
           </div>
         </div>
-
       </div>
-        <div>
-        <div className="m-3 w-full p-1">
-            {StoreForm.map((card, index) => {
-              return (
-                <div key={index}>
-                  <DataAdminCard
-                    card={card}
-                    // updateCard={updateCard}
-                    id={card.id}
-                    option={card.data.option}
-                    question={card.data.question}
-                    description={card.data.description}
-                    multipleChoice={card.multipleChoice}
-                    checkBoxes={card.checkBoxes}
-                    // save={save}
-                    // setSave={setSave}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </div>
     </div>
   );
 };

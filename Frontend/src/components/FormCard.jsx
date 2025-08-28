@@ -1,134 +1,168 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input, MultipeChoice, Select, CheckBox } from "./index.js";
-import { useForms } from "../Context/StoreContext.jsx";
 
 const FormCard = ({
-  card,
-  id,
   question,
+  questionId,
+  type,
+  questionText,
   description,
-  option,
-  updateCard,
-  multipleChoice,
-  checkBoxes,
+  required,
+  options,
+  updateAnswer,
+  currentAnswer,
 }) => {
-  const [checkBoxesF, setCheckboxesF] = useState(checkBoxes);
+  const [answer, setAnswer] = useState(currentAnswer || "");
+  const [selectedOptions, setSelectedOptions] = useState(
+    type === "checkbox" && currentAnswer ? JSON.parse(currentAnswer) : []
+  );
 
-  const [answer, setAnswer] = useState("");
+  useEffect(() => {
+    setAnswer(currentAnswer || "");
+    if (type === "checkbox" && currentAnswer) {
+      try {
+        setSelectedOptions(JSON.parse(currentAnswer));
+      } catch {
+        setSelectedOptions([]);
+      }
+    }
+  }, [currentAnswer, type]);
 
   const onChangeHandler = (event) => {
     const value = event.target.value;
     setAnswer(value);
+    updateAnswer(questionId, value);
   };
 
-  const checkAnsFunc = (event, info) => {
-    const id = info.id;
-    console.log(id, info);
-    setCheckboxesF((prev) => prev.map((ch) => (ch.id == id ? info : ch)));
+  const onCheckboxChange = (optionText, checked) => {
+    let newSelectedOptions;
+    if (checked) {
+      newSelectedOptions = [...selectedOptions, optionText];
+    } else {
+      newSelectedOptions = selectedOptions.filter(opt => opt !== optionText);
+    }
+    setSelectedOptions(newSelectedOptions);
+    updateAnswer(questionId, JSON.stringify(newSelectedOptions));
   };
- 
-  useEffect(()=>{
-    updateCard(id, {
-          id,
-          data: { id, option, question, description, answer },
-          multipleChoice,
-          checkBoxes:checkBoxesF,
-        })
-  },[answer,checkBoxesF])
+
+  const onRadioChange = (optionText) => {
+    setAnswer(optionText);
+    updateAnswer(questionId, optionText);
+  };
 
   return (
-    <div
-      className="mx-auto bg-red-400 border rounded-2xl m-3  "
-      key={id}
-      // onClick={() => updateCard(id, {id,data:{id,option,question,description,answer},multipleChoice,checkBoxes:checkBoxesF})}
-    >
-      <div className="flex flex-row bg-red-700 px-6 pt-4 rounded-2xl pb-2">
+    <div className="mx-auto bg-white border rounded-2xl m-3 shadow-sm">
+      <div className="flex flex-row bg-blue-50 px-6 pt-4 rounded-t-2xl pb-2">
         <div className="w-full">
-          <input
-            type="text"
-            className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor  `}
-            value={card.data.question}
-            disabled
-          />
-
-          {card.data.description && (
-            <input
-              type="text"
-              className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor  `}
-              value={card.data.description}
-              disabled
-            />
+          <div className="mb-2 text-gray-900 text-lg font-medium">
+            {questionText}
+            {required && <span className="text-red-500 ml-1">*</span>}
+          </div>
+          
+          {description && (
+            <div className="mb-2 text-gray-600 text-sm">
+              {description}
+            </div>
           )}
         </div>
       </div>
 
-        <div className="px-6 pt-4 m-3 ">
-          {card.data.option === "Shortanswer" && (
-            <>
-              <Input
-                type="text"
-                placeholder={"Your answer"}
-                name="answer"
-                onChange={(event) => onChangeHandler(event)}
-                value={answer}
-              />
-            </>
-          )}
-          {card.data.option === "Multipechoice" && (
-            <>
-              <h1>Multipechoice</h1>
-              <div className="flex items-center mb-4 flex-row space-x-3">
-                <div className="m-1 w-full">
-                  {multipleChoice.map((mul, index) => (
-                    <div key={index} className="m-1 w-full">
-                      <MultipeChoice
-                        mul={mul}
-                        change={onChangeHandler}
-                        id={mul.id}
-                        choice={mul.value}
-                        forFormSurvey={true}
-                      />
-                    </div>
-                  ))}
-                </div>
+      <div className="px-6 pt-4 pb-6">
+        {type === "short-answer" && (
+          <Input
+            type="text"
+            placeholder="Your answer"
+            name="answer"
+            onChange={onChangeHandler}
+            value={answer}
+            required={required}
+          />
+        )}
+        
+        {type === "paragraph" && (
+          <textarea
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Your answer"
+            value={answer}
+            onChange={onChangeHandler}
+            rows={4}
+            required={required}
+          />
+        )}
+        
+        {type === "multiple-choice" && (
+          <div className="space-y-2">
+            {options.map((option, index) => (
+              <div key={index} className="flex items-center">
+                <input
+                  type="radio"
+                  id={`${questionId}-${index}`}
+                  name={questionId}
+                  value={option}
+                  checked={answer === option}
+                  onChange={() => onRadioChange(option)}
+                  className="mr-3 text-blue-600"
+                  required={required}
+                />
+                <label htmlFor={`${questionId}-${index}`} className="text-gray-700">
+                  {option}
+                </label>
               </div>
-            </>
-          )}
-          {card.data.option === "Checkboxes" && (
-            <>
-              {checkBoxes.map((check) => (
-                <div key={check.index} className="m-1 w-full">
-                  <CheckBox
-                    check={check}
-                    // change={checkAnsFunc}
-                    change={onChangeHandler}
-                    id={check.id}
-                    choice={check.value}
-                    forFormSurvey={true}
-                  />
-                </div>
-              ))}
-            </>
-          )}
-          {card.data.option === "Paragraph" && <h1>Paragraph</h1>}
-          {card.data.option === "Fileupload" && <h1>Fileupload</h1>}
-        </div>
-
-      {/* <div className="px-6 pt-4 pb-2 flex flex-row space-x-3 flex-wrap mx-auto w-full ">
-        <div
-          onClick={() =>
-            updateCard(id, {
-              id,
-              data: { id, option, question, description, answer },
-              multipleChoice,
-              checkBoxes:checkBoxesF,
-            })
-          }
-          className="bg-red-100 border rounded p-2 "
-        >
-          save
-        </div>
-      </div> */}
+            ))}
+          </div>
+        )}
+        
+        {type === "checkbox" && (
+          <div className="space-y-2">
+            {options.map((option, index) => (
+              <div key={index} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`${questionId}-${index}`}
+                  value={option}
+                  checked={selectedOptions.includes(option)}
+                  onChange={(e) => onCheckboxChange(option, e.target.checked)}
+                  className="mr-3 text-blue-600"
+                />
+                <label htmlFor={`${questionId}-${index}`} className="text-gray-700">
+                  {option}
+                </label>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {type === "dropdown" && (
+          <select
+            value={answer}
+            onChange={onChangeHandler}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required={required}
+          >
+            <option value="">Choose an option</option>
+            {options.map((option, index) => (
+              <option key={index} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        )}
+        
+        {type === "file-upload" && (
+          <input
+            type="file"
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) {
+                setAnswer(file.name);
+                updateAnswer(questionId, file.name);
+              }
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required={required}
+          />
+        )}
+      </div>
     </div>
   );
 };

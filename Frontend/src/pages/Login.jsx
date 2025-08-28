@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useForms } from "../Context/StoreContext";
-import axios from "axios";
+import { api, endpoints } from "../utils/api";
 
 const Login = () => {
   const { changeStatus, status, cards, url, userData, setUser } = useForms();
@@ -10,28 +10,22 @@ const Login = () => {
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
   const login = async (data) => {
-    // event.preventDefault()
+    console.log("🔐 Attempting login with data:", { email: data.email, password: "[HIDDEN]" });
     setError("");
     try {
-      const newurl = `/api/v1/user/login`;
-      const response = await axios.post(newurl, data);
-      console.log(response);
-      // console.log(response.data.data.accessToken);
-      console.log(response.data.data.user);
-      // console.log(cards);
-      // setUser(response.data.data.user);
+      const response = await api.post(endpoints.auth.login, data);
+      console.log("✅ Login successful");
+      console.log("👤 User data:", response.data.data.user);
+      
+      // Store user data
       localStorage.setItem("token", response.data.data.accessToken);
       localStorage.setItem("userData", JSON.stringify(response.data.data.user));
-      // localStorage.setItem("cards",JSON.stringify(cards))
+      
       changeStatus(true);
       navigate("/");
-      // if (session) {
-      //     const userData = await authService.getCurrentUser()
-      //     if (userData) dispatch(authLogin(userData))
-      //     navigate("/")
-      // }
     } catch (error) {
-      setError(error.message);
+      console.error("❌ Login failed:", error);
+      setError(error.response?.data?.message || error.message || "Login failed");
     }
   };
   useEffect(() => {

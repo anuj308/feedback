@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { HomeCard, RenameCard } from "../components/index.js";
-import axios, { all } from "axios";
+import { api, endpoints } from "../utils/api";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
 
@@ -16,15 +16,16 @@ const Home = () => {
   const [showRename, setShowRename] = useState(false);
   const [status, setStatus] = useState(false);
   const deleteForm = async (id) => {
+    console.log("🗑️ Deleting form:", id);
     try {
-      const response = await axios.delete("/api/v1/form/f/" + id);
-      const func = async () => {
-        const response = await axios.get("/api/v1/form/o/" + userData._id);
-        setAllForms(response.data.data.form);
-      };
-      func();
+      const response = await api.delete(endpoints.forms.delete(id));
+      console.log("✅ Form deleted successfully");
+      
+      // Refresh forms list
+      const formsResponse = await api.get(endpoints.forms.getByOwner(userData._id));
+      setAllForms(formsResponse.data.data.form);
     } catch (error) {
-      console.log(error);
+      console.error("❌ Error deleting form:", error);
     }
   };
 
@@ -61,7 +62,9 @@ const Home = () => {
   useEffect(() => {
     try {
       const func = async () => {
-        const response = await axios.get("/api/v1/form/o/" + userData._id);
+        console.log("📋 Fetching forms for user:", userData._id);
+        const response = await api.get(endpoints.forms.getByOwner(userData._id));
+        console.log("📄 Forms loaded:", response.data.data.form.length, "forms");
         setAllForms(response.data.data.form);
       };
       if (token) {
@@ -71,7 +74,7 @@ const Home = () => {
         }
       }
     } catch (error) {
-      console.log("while fetching all forms", error);
+      console.error("❌ Error while fetching all forms:", error);
     }
   }, [showRename]);
   return (

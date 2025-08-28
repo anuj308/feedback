@@ -10,9 +10,20 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { FormProvider } from "./Context/StoreContext";
 import Form from "./pages/Form";
 import Admin from "./pages/Admin";
+import api from "./utils/api";
 
 function App() {
   const token = localStorage.getItem("token");
+
+  // Initialize API instance (it's already configured in utils/api.js)
+  useEffect(() => {
+    console.log("🚀 App initialized with API configuration");
+    console.log("🔧 Environment:", {
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+      nodeEnv: import.meta.env.VITE_NODE_ENV,
+      debugApi: import.meta.env.VITE_DEBUG_API,
+    });
+  }, []);
 
   const [userData, setUserData] = useState({});
 
