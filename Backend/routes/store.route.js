@@ -4,6 +4,7 @@ import {
   deleteResponses,
   getAllResponsesByFormId,
   storeForm,
+  getResponseAnalytics,
 } from "../controllers/store.controller.js";
 
 const router = express.Router();
@@ -14,5 +15,8 @@ router
   .get(verifyJWT, getAllResponsesByFormId)
   
 router.route("/s/:storeId").delete(verifyJWT, deleteResponses);
+
+// New analytics route
+router.route("/analytics/:formId").get(verifyJWT, getResponseAnalytics);
 
 export default router;

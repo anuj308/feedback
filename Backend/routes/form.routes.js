@@ -7,6 +7,9 @@ import {
   getForm,
   renameForm,
   toogleResponses,
+  getFormAnalytics,
+  getFormResponses,
+  updateFormSettings,
 } from "../controllers/form.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { get } from "mongoose";
@@ -25,6 +28,11 @@ router
 router.route("/o/:ownerId").get(verifyJWT,getAllFormByOwnerId)
 
 router.route("/admin/:formId").get(verifyJWT,toogleResponses)
+
+// New analytics routes
+router.route("/analytics/:formId").get(verifyJWT, getFormAnalytics)
+router.route("/responses/:formId").get(verifyJWT, getFormResponses)
+router.route("/settings/:formId").patch(verifyJWT, updateFormSettings)
 
 
 export default router;
