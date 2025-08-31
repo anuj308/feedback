@@ -263,7 +263,7 @@ const getFormResponses = asyncHandler(async (req, res) => {
 // Update form settings
 const updateFormSettings = asyncHandler(async (req, res) => {
   const { formId } = req.params;
-  const { settings } = req.body;
+  const { settings, acceptingResponses } = req.body;
 
   if (!formId) {
     throw new ApiError(400, "Form ID is required");
@@ -279,13 +279,21 @@ const updateFormSettings = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized to update this form");
   }
 
+  const updateData = {};
+  
+  // Update settings if provided
+  if (settings) {
+    updateData.settings = { ...form.settings.toObject(), ...settings };
+  }
+  
+  // Update acceptingResponses if provided
+  if (typeof acceptingResponses !== 'undefined') {
+    updateData.acceptingResponses = acceptingResponses;
+  }
+
   const updatedForm = await Form.findByIdAndUpdate(
     formId,
-    { 
-      $set: { 
-        settings: { ...form.settings, ...settings } 
-      } 
-    },
+    { $set: updateData },
     { new: true }
   );
 

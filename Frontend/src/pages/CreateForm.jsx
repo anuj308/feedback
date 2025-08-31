@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
-import { Button, FormHead, InputCard, AutoSaveSettings } from "../components/index";
+import { FormHead, InputCard, AutoSaveSettings, FormBuilderNavbar, PublishModal } from "../components/index";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { api, endpoints } from "../utils/api";
 import Admin from "./Admin";
 import useAutoSave from "../hooks/useAutoSave";
-import SaveStatusIndicator from "../components/SaveStatusIndicator";
 
 const CreateForm = () => {
   const navigate = useNavigate();
@@ -20,7 +19,8 @@ const CreateForm = () => {
     disableAutoSave: false,
     autoSaveInterval: 2000,
   });
-  const [showSettings, setShowSettings] = useState(false);
+  const [currentTab, setCurrentTab] = useState("create");
+  const [showPublishModal, setShowPublishModal] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -123,6 +123,20 @@ const CreateForm = () => {
     console.log("🔧 Auto-save settings updated:", newSettings);
   };
 
+  const handleSave = async () => {
+    if (manualSave) {
+      await manualSave();
+    }
+  };
+
+  const handlePublish = () => {
+    setShowPublishModal(true);
+  };
+
+  const handleTabChange = (tab) => {
+    setCurrentTab(tab);
+  };
+
   const onChangeHandler = (event) => {
     const value = event.target.value;
     const name = event.target.name;
@@ -147,8 +161,6 @@ const CreateForm = () => {
       console.error("❌ Error updating form:", error);
     }
   };
-
-  const [page, setPage] = useState("create");
 
   useEffect(() => {
     const func = async () => {
@@ -196,109 +208,109 @@ const CreateForm = () => {
   };
 
   return (
-    <div>
-      <div className=" flex flex-row justify-evenly mx-auto mt-20 md:w-1/2 rounded overflow-hidden shadow-lg">
-        <div className={`${ page=='create' ? "bg-red-600" : ""} p-3 hover:bg-gray-900 hover:text-white`} onClick={() => setPage("create")}>
-          create
-        </div>
-        <div className={`${ page=='admin' ? "bg-red-600" : ""} p-3 hover:bg-gray-900 hover:text-white`} onClick={() => setPage("admin")}>
-          admin
-        </div>
-      </div>
-      {
-        page === "create" ? (
-          <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg ">
-            {/* Save Status Indicator */}
-            <div className="flex justify-between items-center px-6 py-3 bg-gray-50 border-b">
-              <SaveStatusIndicator 
-                isSaving={isSaving}
-                hasUnsavedChanges={hasUnsavedChanges}
-                lastSavedTime={lastSavedTime}
-              />
-              <div className="flex items-center gap-3">
-                {saveError && (
-                  <div className="text-red-600 text-sm">
-                    ⚠️ {saveError}
-                  </div>
-                )}
-                <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="text-gray-600 hover:text-gray-800 text-sm font-medium px-3 py-1 rounded-md hover:bg-gray-200 transition-colors"
-                  title="Auto-save settings"
-                >
-                  ⚙️ Settings
-                </button>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Fixed Navbar */}
+      <FormBuilderNavbar
+        formTitle={headData.formTitle || "Untitled Form"}
+        isSaving={isSaving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        onSave={handleSave}
+        onPublish={handlePublish}
+        currentTab={currentTab}
+        onTabChange={handleTabChange}
+      />
 
-            {/* Auto-Save Settings */}
-            {showSettings && (
-              <div className="px-6 py-4 bg-gray-50 border-b">
-                <AutoSaveSettings 
-                  formId={fId}
-                  onSettingsChange={handleAutoSaveSettingsChange}
-                />
-              </div>
-            )}
+      {/* Main Content with top padding for fixed navbar */}
+      <div className="pt-16">
+        {/* Tab Content */}
+        {currentTab === "create" && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
             
-            <FormHead headData={headData} onChangeHandler={onChangeHandler} />
-            <div className="my-8 ">
-              {questions.map((question, index) => {
-                return (
-                  <div key={question.questionId}>
-                    <InputCard
-                      question={question}
-                      questionId={question.questionId}
-                      type={question.type}
-                      questionText={question.question}
-                      description={question.description}
-                      titlePlaceholder={question.titlePlaceholder}
-                      descriptionPlaceholder={question.descriptionPlaceholder}
-                      required={question.required}
-                      options={question.options || []}
-                      addQuestion={addQuestion}
-                      updateQuestion={updateQuestion}
-                      deleteQuestion={deleteQuestion}
-                      questions={questions}
-                    />
+            {/* Form Builder Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              
+              {/* Form Header */}
+              <div className="p-6 border-b border-gray-200">
+                <FormHead headData={headData} onChangeHandler={onChangeHandler} />
+              </div>
+
+              {/* Questions Section */}
+              <div className="p-6">
+                <div className="space-y-6">
+                  {questions.map((question, index) => (
+                    <div key={question.questionId} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <InputCard
+                        question={question}
+                        questionId={question.questionId}
+                        type={question.type}
+                        questionText={question.question}
+                        description={question.description}
+                        titlePlaceholder={question.titlePlaceholder}
+                        descriptionPlaceholder={question.descriptionPlaceholder}
+                        required={question.required}
+                        options={question.options || []}
+                        addQuestion={addQuestion}
+                        updateQuestion={updateQuestion}
+                        deleteQuestion={deleteQuestion}
+                        questions={questions}
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Add Question Button */}
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={() => addQuestion(createNewQuestion())}
+                      className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      <span>Add Question</span>
+                    </button>
                   </div>
-                );
-              })}
-              
-              {/* Add new question button */}
-              <div className="mx-auto md:w-1/2 mt-4">
-                <Button 
-                  onClick={() => addQuestion(createNewQuestion())} 
-                  className="w-full mb-4 bg-blue-500 hover:bg-blue-600"
-                >
-                  Add Question
-                </Button>
+                </div>
               </div>
-            </div>
-            
-            {/* Updated Done button with manual save */}
-            <div className="flex gap-4 px-6 pb-6">
-              <Button 
-                onClick={() => manualSave().then(() => navigate("/"))} 
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                disabled={isSaving}
-              >
-                {isSaving ? "Saving..." : "Done"}
-              </Button>
-              
-              <Button 
-                onClick={() => manualSave()} 
-                className="px-6 bg-gray-600 hover:bg-gray-700"
-                disabled={isSaving}
-              >
-                Save Now
-              </Button>
             </div>
           </div>
-        ) : (
-          <Admin formId={fId} />
-        )
-      }
+        )}
+
+        {/* Responses Tab */}
+        {currentTab === "responses" && (
+          <div className="max-w-6xl mx-auto px-4 py-8">
+            <Admin formId={fId} />
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {currentTab === "settings" && (
+          <div className="max-w-4xl mx-auto px-4 py-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Form Settings</h2>
+              
+              {/* Auto-save Settings */}
+              <AutoSaveSettings 
+                formId={fId}
+                onSettingsChange={handleAutoSaveSettingsChange}
+              />
+              
+              {/* Additional settings can go here */}
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">More Settings Coming Soon</h3>
+                <p className="text-gray-600">Additional form customization options will be available here.</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Publish Modal */}
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        formId={fId}
+        formTitle={headData.formTitle || "Untitled Form"}
+      />
     </div>
   );
 };

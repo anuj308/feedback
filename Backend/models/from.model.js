@@ -76,7 +76,8 @@ const formSchema = new mongoose.Schema(
       showResultsSummary: { type: Boolean, default: false },
       disableAutoSave: { type: Boolean, default: false },
       autoSaveInterval: { type: Number, default: 2000 }, // milliseconds
-      lastAutoSaved: { type: Date, default: Date.now }
+      lastAutoSaved: { type: Date, default: Date.now },
+      allowedEmails: [String] // For restricted access
     },
     acceptingResponses: {
       type: Boolean,
