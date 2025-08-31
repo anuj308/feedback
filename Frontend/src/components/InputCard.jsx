@@ -79,12 +79,12 @@ const InputCard = ({
   const needsOptions = ["multiple-choice", "checkbox", "dropdown"].includes(questionData.type);
 
   return (
-    <div className="mx-auto bg-white border rounded-2xl m-3 shadow-sm">
-      <div className="flex flex-row bg-gray-50 px-6 pt-4 rounded-t-2xl pb-2">
+    <div className="mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl m-3 shadow-sm">
+      <div className="flex flex-row bg-gray-50 dark:bg-gray-900 px-6 pt-4 rounded-t-2xl pb-2">
         <div className="w-full">
           <Input
             type="text"
-            className="mb-4 bg-white text-gray-900 text-lg font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            className="mb-4 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-lg font-medium rounded-lg focus:ring-blue-500 focus:border-blue-500 border border-gray-300 dark:border-gray-600 block w-full p-2.5"
             value={questionData.question}
             onChange={onChangeHandler}
             name="question"
@@ -93,7 +93,7 @@ const InputCard = ({
 
           <Input
             type="text"
-            className="mb-4 bg-white text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+            className="mb-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 border border-gray-300 dark:border-gray-600 block w-full p-2.5"
             value={questionData.description}
             onChange={onChangeHandler}
             name="description"
@@ -104,7 +104,7 @@ const InputCard = ({
         <div className="ml-4 flex flex-col justify-between">
           <button
             onClick={() => deleteQuestion(questionId)}
-            className="text-red-500 hover:text-red-700 p-2"
+            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 p-2"
             type="button"
           >
             ×
@@ -119,7 +119,7 @@ const InputCard = ({
             value={questionData.type}
             onChange={onChangeHandler}
             name="type"
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           
           <label className="flex items-center">
@@ -130,17 +130,17 @@ const InputCard = ({
               onChange={onChangeHandler}
               className="mr-2 text-blue-600"
             />
-            <span className="text-sm text-gray-700">Required</span>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Required</span>
           </label>
         </div>
 
         {needsOptions && (
           <div className="mt-4">
             <div className="flex justify-between items-center mb-2">
-              <h4 className="text-sm font-medium text-gray-700">Options</h4>
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Options</h4>
               <button
                 onClick={addOption}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
                 type="button"
               >
                 + Add Option
@@ -150,19 +150,19 @@ const InputCard = ({
             <div className="space-y-2">
               {questionData.options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
-                  <span className="text-gray-400 text-sm">
+                  <span className="text-gray-400 dark:text-gray-500 text-sm">
                     {questionData.type === "multiple-choice" ? "○" : "☐"}
                   </span>
                   <input
                     type="text"
                     value={option}
                     onChange={(e) => updateOption(index, e.target.value)}
-                    className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
                     placeholder={`Option ${index + 1}`}
                   />
                   <button
                     onClick={() => deleteOption(index)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
                     type="button"
                   >
                     ×
@@ -174,30 +174,30 @@ const InputCard = ({
         )}
 
         {questionData.type === "short-answer" && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <input
               type="text"
               placeholder="Short answer text"
-              className="w-full border-b border-gray-300 bg-transparent focus:outline-none focus:border-blue-500"
+              className="w-full border-b border-gray-300 dark:border-gray-600 bg-transparent text-gray-900 dark:text-gray-300 focus:outline-none focus:border-blue-500"
               disabled
             />
           </div>
         )}
 
         {questionData.type === "paragraph" && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <textarea
               placeholder="Long answer text"
               rows={3}
-              className="w-full border border-gray-300 bg-white rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded px-2 py-1 focus:outline-none focus:border-blue-500"
               disabled
             />
           </div>
         )}
 
         {questionData.type === "file-upload" && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-500">
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center text-gray-500 dark:text-gray-400">
               Click to upload or drag and drop
             </div>
           </div>

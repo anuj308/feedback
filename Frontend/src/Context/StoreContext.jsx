@@ -5,6 +5,7 @@ export const FormContext = createContext({
   userData: {},
   user: null,
   forms: [],
+  currentTheme: 'light',
   setUser: () => {},
   updateUser: () => {},
   setIsAuthenticated: () => {},
@@ -12,6 +13,7 @@ export const FormContext = createContext({
   logout: async () => {},
   checkAuthStatus: async () => {},
   resetAppState: () => {},
+  applyTheme: () => {},
   isLoading: false,
   setIsLoading: () => {},
   // Legacy support (gradually remove these)

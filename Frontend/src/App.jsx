@@ -29,7 +29,34 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState({});
+  const [currentTheme, setCurrentTheme] = useState('light');
   const authCheckRef = useRef(false);
+
+  // Apply theme to DOM
+  const applyTheme = useCallback((theme) => {
+    const root = document.documentElement;
+    
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else if (theme === 'light') {
+      root.classList.remove('dark');
+    } else { // auto
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (prefersDark) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+    setCurrentTheme(theme);
+  }, []);
+
+  // Load theme from user settings when user data changes
+  useEffect(() => {
+    if (userData?.settings?.theme) {
+      applyTheme(userData.settings.theme);
+    }
+  }, [userData?.settings?.theme, applyTheme]);
 
   // Check authentication status on app load (only once)
   useEffect(() => {
@@ -153,6 +180,7 @@ function App() {
         userData,
         user: userData, // Alias for compatibility
         forms: [], // This can be implemented if needed
+        currentTheme,
         setUser,
         updateUser,
         setIsAuthenticated,
@@ -160,6 +188,7 @@ function App() {
         logout,
         checkAuthStatus,
         resetAppState,
+        applyTheme,
         isLoading,
         setIsLoading,
       }}

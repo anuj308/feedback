@@ -19,12 +19,12 @@ const MultipeChoice = ({
          name="answer"
          value={choice}
          onClick={(event) => change(event)}
-         className="w-4 h-4 border-gray-300 "
+         className="w-4 h-4 border-gray-300 dark:border-gray-600 text-blue-600 bg-gray-100 dark:bg-gray-700 focus:ring-blue-500"
          />
          ) : (
            <input
            type="radio"
-           className="w-4 h-4 border-gray-300 "
+           className="w-4 h-4 border-gray-300 dark:border-gray-600 text-blue-600 bg-gray-100 dark:bg-gray-700"
            readOnly
           />
         )}
@@ -62,7 +62,7 @@ const MultipeChoice = ({
         {forFormSurvey ? (
           ""
         ) : (
-          <div className="m-1 w-8" onClick={() => del(id)}>
+          <div className="m-1 w-8 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 cursor-pointer" onClick={() => del(id)}>
             {" "}
             X
           </div>

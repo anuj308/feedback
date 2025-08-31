@@ -15,8 +15,8 @@ const SaveStatusIndicator = ({
       return {
         text: "Saving...",
         icon: "🔄",
-        color: "text-blue-600",
-        bgColor: "bg-blue-50"
+        color: "text-blue-600 dark:text-blue-400",
+        bgColor: "bg-blue-50 dark:bg-blue-900/20"
       };
     }
     
@@ -24,16 +24,16 @@ const SaveStatusIndicator = ({
       return {
         text: "Unsaved changes",
         icon: "⚠️",
-        color: "text-orange-600",
-        bgColor: "bg-orange-50"
+        color: "text-orange-600 dark:text-orange-400",
+        bgColor: "bg-orange-50 dark:bg-orange-900/20"
       };
     }
     
     return {
       text: lastSavedTime ? `Saved ${formatTime(lastSavedTime)}` : "All changes saved",
       icon: "✅",
-      color: "text-green-600",
-      bgColor: "bg-green-50"
+      color: "text-green-600 dark:text-green-400",
+      bgColor: "bg-green-50 dark:bg-green-900/20"
     };
   };
 

@@ -5,7 +5,7 @@ import { api, endpoints } from '../utils/api';
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user, updateUser } = useForms();
+  const { user, updateUser, applyTheme } = useForms();
   
   const [settings, setSettings] = useState({
     theme: 'light', // light, dark, auto
@@ -52,34 +52,18 @@ const Settings = () => {
     }
   }, [user]);
 
-  // Apply theme changes immediately
+  // Apply theme changes immediately using context function
   useEffect(() => {
-    const applyTheme = () => {
-      const root = document.documentElement;
-      
-      if (settings.theme === 'dark') {
-        root.classList.add('dark');
-      } else if (settings.theme === 'light') {
-        root.classList.remove('dark');
-      } else { // auto
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (prefersDark) {
-          root.classList.add('dark');
-        } else {
-          root.classList.remove('dark');
-        }
-      }
-    };
-
-    applyTheme();
+    applyTheme(settings.theme);
 
     // Listen for system theme changes if auto mode
     if (settings.theme === 'auto') {
+      const handleMediaChange = () => applyTheme(settings.theme);
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      mediaQuery.addEventListener('change', applyTheme);
-      return () => mediaQuery.removeEventListener('change', applyTheme);
+      mediaQuery.addEventListener('change', handleMediaChange);
+      return () => mediaQuery.removeEventListener('change', handleMediaChange);
     }
-  }, [settings.theme]);
+  }, [settings.theme, applyTheme]);
 
   const handleSaveSettings = async () => {
     setLoading(true);
@@ -97,7 +81,7 @@ const Settings = () => {
       });
 
       if (response.data.success) {
-        updateUser(response.data.user);
+        updateUser(response.data.data.user);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus(''), 3000);
       }

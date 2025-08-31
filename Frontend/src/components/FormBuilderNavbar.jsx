@@ -26,7 +26,7 @@ const FormBuilderNavbar = ({
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-sm z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
@@ -34,7 +34,7 @@ const FormBuilderNavbar = ({
           <div className="flex items-center space-x-4">
             <button
               onClick={handleBackToHome}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Back to forms"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,19 +43,19 @@ const FormBuilderNavbar = ({
             </button>
             
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg font-semibold text-gray-900 truncate max-w-xs">
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate max-w-xs">
                   {formTitle}
                 </h1>
                 <div className="flex items-center space-x-2 text-sm">
                   {isSaving && (
-                    <span className="text-blue-600 flex items-center">
-                      <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <span className="text-blue-600 dark:text-blue-400 flex items-center">
+                      <svg className="animate-spin -ml-1 mr-1 h-3 w-3 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -63,10 +63,10 @@ const FormBuilderNavbar = ({
                     </span>
                   )}
                   {!isSaving && hasUnsavedChanges && (
-                    <span className="text-orange-600">Unsaved changes</span>
+                    <span className="text-orange-600 dark:text-orange-400">Unsaved changes</span>
                   )}
                   {!isSaving && !hasUnsavedChanges && (
-                    <span className="text-green-600">All changes saved</span>
+                    <span className="text-green-600 dark:text-green-400">All changes saved</span>
                   )}
                 </div>
               </div>
@@ -74,13 +74,13 @@ const FormBuilderNavbar = ({
           </div>
 
           {/* Center section - Tab navigation */}
-          <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
             <button
               onClick={() => onTabChange?.('create')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'create' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -94,8 +94,8 @@ const FormBuilderNavbar = ({
               onClick={() => onTabChange?.('responses')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'responses' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -109,8 +109,8 @@ const FormBuilderNavbar = ({
               onClick={() => onTabChange?.('settings')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'settings' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
               <div className="flex items-center space-x-2">
@@ -130,7 +130,7 @@ const FormBuilderNavbar = ({
             <button
               onClick={onSave}
               disabled={isSaving}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isSaving ? 'Saving...' : 'Save'}
             </button>
@@ -138,7 +138,7 @@ const FormBuilderNavbar = ({
             {/* Publish button */}
             <button
               onClick={onPublish}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

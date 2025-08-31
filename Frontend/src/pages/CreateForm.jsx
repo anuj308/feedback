@@ -180,7 +180,7 @@ const CreateForm = () => {
   }, []);
 
       return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-800">
       {/* Fixed Navbar */}
       <FormBuilderNavbar
         formTitle={headData.formTitle || "Untitled Form"}
@@ -193,16 +193,16 @@ const CreateForm = () => {
       />
 
       {/* Main Content with top padding for fixed navbar */}
-      <div className="pt-16">
+      <div className="pt-16 ">
         {/* Tab Content */}
         {currentTab === "create" && (
-          <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto px-4 py-8 ">
             
             {/* Form Builder Section */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
               
               {/* Form Header */}
-              <div className="p-6 border-b border-gray-200">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <FormHead headData={headData} onChangeHandler={onChangeHandler} />
               </div>
 
@@ -210,7 +210,7 @@ const CreateForm = () => {
               <div className="p-6">
                 <div className="space-y-6">
                   {questions.map((question, index) => (
-                    <div key={question.questionId} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div key={question.questionId} className="border border-gray-200 rounded-lg overflow-hidden dark:border-gray-700">
                       <InputCard
                         question={question}
                         questionId={question.questionId}
@@ -257,7 +257,7 @@ const CreateForm = () => {
         {/* Settings Tab */}
         {currentTab === "settings" && (
           <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-lg shadow-sm border dark:bg-gray-800 border-gray-200 p-6 dark:border-gray-700">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Form Settings</h2>
               
               {/* Auto-save Settings */}
@@ -267,9 +267,9 @@ const CreateForm = () => {
               />
               
               {/* Additional settings can go here */}
-              <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+              <div className="mt-8 p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                 <h3 className="text-lg font-semibold mb-2">More Settings Coming Soon</h3>
-                <p className="text-gray-600">Additional form customization options will be available here.</p>
+                <p className="text-gray-600 ">Additional form customization options will be available here.</p>
               </div>
             </div>
           </div>

@@ -139,35 +139,35 @@ const Home = () => {
             formRenameId={formRenameId}
             setAllForms={setAllForms}
             userData={userData}
-            className="m-44 border bg-white rounded-lg p-7 shadow-md"
+            className="m-44 border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-lg p-7 shadow-md"
           />
         </div>
       )}
       
-      <div className="min-h-[80vh] mt-4 my-20 px-6 pt-4 pb-2 flex flex-row flex-wrap justify-center mx-auto w-full">
+      <div className="min-h-[80vh] mt-0 py-20 px-6 pt-8 pb-2 flex flex-row flex-wrap justify-center mx-auto w-full bg-gray-50 dark:bg-gray-900">
         {formsLoading ? (
           <div className="flex flex-col items-center justify-center h-80">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading forms...</p>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Loading forms...</p>
           </div>
         ) : searchQuery && filteredForms.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-80">
-            <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No forms found</h3>
-            <p className="text-gray-500">No forms match your search for "{searchQuery}"</p>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No forms found</h3>
+            <p className="text-gray-500 dark:text-gray-400">No forms match your search for "{searchQuery}"</p>
           </div>
         ) : allForms.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-80">
-            <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No forms yet</h3>
-            <p className="text-gray-500 mb-4">Create your first form to get started</p>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No forms yet</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">Create your first form to get started</p>
             <button
               onClick={() => toCreate()}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               Create Your First Form
             </button>
@@ -176,14 +176,14 @@ const Home = () => {
           <>
             {searchQuery && (
               <div className="w-full mb-6 text-center">
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-400">
                   Found {filteredForms.length} form{filteredForms.length !== 1 ? 's' : ''} for "{searchQuery}"
                 </p>
               </div>
             )}
             {filteredForms.map((fon, index) => {
               return (
-                <div className="text-black text-xl " key={index}>
+                <div className="text-black dark:text-white text-xl" key={index}>
                   <HomeCard
                     fon={fon}
                     del={deleteForm}

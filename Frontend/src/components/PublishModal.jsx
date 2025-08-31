@@ -103,17 +103,17 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Publish Form</h2>
-            <p className="text-sm text-gray-600 mt-1">{formTitle}</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Publish Form</h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{formTitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -126,13 +126,13 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
           
           {/* Form Link Section */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Share Form</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Share Form</h3>
             <div className="flex items-center space-x-2">
               <input
                 type="text"
                 value={formLink}
                 readOnly
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm"
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
               />
               <button
                 onClick={copyToClipboard}
@@ -145,14 +145,14 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
 
           {/* Response Collection */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Response Collection</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Response Collection</h3>
             <div className="space-y-4">
               
               {/* Accept Responses Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Accept responses</label>
-                  <p className="text-xs text-gray-500">Allow people to submit responses to this form</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Accept responses</label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Allow people to submit responses to this form</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -168,8 +168,8 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
               {/* Limit to One Response */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Limit to one response</label>
-                  <p className="text-xs text-gray-500">Each person can submit only one response</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Limit to one response</label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Each person can submit only one response</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -185,8 +185,8 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
               {/* Show Progress Bar */}
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Show progress bar</label>
-                  <p className="text-xs text-gray-500">Display completion progress to respondents</p>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Show progress bar</label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Display completion progress to respondents</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -203,7 +203,7 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
 
           {/* Access Control */}
           <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Who can respond</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Who can respond</h3>
             <div className="space-y-4">
               
               {/* Public/Restricted Radio */}
@@ -216,7 +216,7 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
                     onChange={() => setPublishSettings(prev => ({ ...prev, requireSignIn: false }))}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Anyone with the link</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Anyone with the link</span>
                 </label>
                 <label className="flex items-center">
                   <input
@@ -226,14 +226,14 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
                     onChange={() => setPublishSettings(prev => ({ ...prev, requireSignIn: true }))}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                   />
-                  <span className="ml-2 text-sm font-medium text-gray-700">Restricted (specific people)</span>
+                  <span className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Restricted (specific people)</span>
                 </label>
               </div>
 
               {/* Email List for Restricted Access */}
               {publishSettings.requireSignIn && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Allowed email addresses
                   </label>
                   
@@ -244,7 +244,7 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
                       value={newEmail}
                       onChange={(e) => setNewEmail(e.target.value)}
                       placeholder="Enter email address"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       onKeyPress={(e) => e.key === 'Enter' && addEmail()}
                     />
                     <button
@@ -259,11 +259,11 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
                   {publishSettings.allowedEmails.length > 0 && (
                     <div className="space-y-2">
                       {publishSettings.allowedEmails.map((email, index) => (
-                        <div key={index} className="flex items-center justify-between bg-white px-3 py-2 rounded border">
-                          <span className="text-sm text-gray-700">{email}</span>
+                        <div key={index} className="flex items-center justify-between bg-white dark:bg-gray-800 px-3 py-2 rounded border border-gray-200 dark:border-gray-600">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">{email}</span>
                           <button
                             onClick={() => removeEmail(email)}
-                            className="text-red-600 hover:text-red-800 text-sm"
+                            className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
                           >
                             Remove
                           </button>
@@ -278,24 +278,24 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
 
           {/* Confirmation Message */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Confirmation message
             </label>
             <textarea
               value={publishSettings.confirmationMessage}
               onChange={(e) => setPublishSettings(prev => ({ ...prev, confirmationMessage: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               placeholder="Message shown after form submission"
             />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>

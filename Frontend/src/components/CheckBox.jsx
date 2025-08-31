@@ -43,13 +43,13 @@ const CheckBox = ({
          name="answer"
          value={choice}
          onClick={(event) => change(event)}
-         className="w-4 h-4 border-gray-300 "
+         className="w-4 h-4 border-gray-300 dark:border-gray-600 text-blue-600 bg-gray-100 dark:bg-gray-700 rounded focus:ring-blue-500"
     
        />
         ) : (
           <input
             type="checkbox"
-            className="w-4 h-4 border-gray-300 "
+            className="w-4 h-4 border-gray-300 dark:border-gray-600 text-blue-600 bg-gray-100 dark:bg-gray-700 rounded"
             readOnly
           />
         )}
@@ -70,7 +70,7 @@ const CheckBox = ({
         {forFormSurvey ? (
           ""
         ) : (
-          <div onClick={() => del(id)} className="mx-3 w-8">
+          <div onClick={() => del(id)} className="mx-3 w-8 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 cursor-pointer">
             X
           </div>
         )}
