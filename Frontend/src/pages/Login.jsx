@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
+import { UserProfileDropdown } from "../components/index";
 
 const Login = () => {
   const { isAuthenticated, setUser, setIsAuthenticated, setUserData, isLoading, setIsLoading } = useForms();
@@ -52,6 +53,36 @@ const Login = () => {
   
   return (
     <>
+      {/* Simple Navbar - Show profile if authenticated, otherwise show login/signup */}
+      <nav className="bg-white border-b border-gray-200 px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 0v12h8V4H6z" clipRule="evenodd" />
+                <path d="M8 6h4v2H8V6zM8 10h4v2H8v-2z" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-semibold text-gray-900">Feedback App</h1>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {isAuthenticated ? (
+              <UserProfileDropdown user={userData || {}} />
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-600 hover:text-gray-900 px-3 py-2 text-sm font-medium">
+                  Sign In
+                </Link>
+                <Link to="/signup" className="bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-lg hover:bg-blue-700">
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+      
       <section className="bg-gray-50 dark:bg-gray-900">
         <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
           <a
@@ -161,7 +192,7 @@ const Login = () => {
                 <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                   Don’t have an account yet?{" "}
                   <Link
-                    to="/register"
+                    to="/signup"
                     className="font-medium text-primary-600 hover:underline dark:text-primary-500"
                   >
                     Sign up

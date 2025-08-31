@@ -3,7 +3,10 @@ import { createContext, useContext } from "react";
 export const FormContext = createContext({
   isAuthenticated: false,
   userData: {},
+  user: null,
+  forms: [],
   setUser: () => {},
+  updateUser: () => {},
   setIsAuthenticated: () => {},
   setUserData: () => {},
   logout: async () => {},

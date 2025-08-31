@@ -16,4 +16,6 @@ import SaveStatusIndicator from './SaveStatusIndicator'
 import AutoSaveSettings from './AutoSaveSettings'
 import FormBuilderNavbar from './FormBuilderNavbar'
 import PublishModal from './PublishModal'
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormBuilderNavbar,PublishModal}
+import UserProfileDropdown from './UserProfileDropdown'
+import HomeNavbar from './HomeNavbar'
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormBuilderNavbar,PublishModal,UserProfileDropdown,HomeNavbar}

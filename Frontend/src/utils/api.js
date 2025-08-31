@@ -165,6 +165,14 @@ export const endpoints = {
     currentUser: '/user/current-user',
   },
 
+  // User endpoints
+  user: {
+    updateSettings: '/user/update-settings',
+    updateAccount: '/user/update-account',
+    updateAvatar: '/user/avatar',
+    changePassword: '/user/change-password',
+  },
+
   // Form endpoints
   forms: {
     create: '/form/create',

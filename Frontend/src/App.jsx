@@ -2,15 +2,28 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import Settings from "./pages/Settings";
 import Navabar from "./components/Navabar";
 import Footer from "./components/Footer";
 import CreateForm from "./pages/CreateForm";
 import Home from "./pages/Home";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { FormProvider } from "./Context/StoreContext";
 import Form from "./pages/Form";
 import Admin from "./pages/Admin";
 import { api, endpoints } from "./utils/api";
+
+// Component to conditionally render Navbar
+const ConditionalNavbar = () => {
+  const location = useLocation();
+  const hideNavbarPaths = ['/', '/settings', '/login', '/signup'];
+  const shouldHideNavbar = hideNavbarPaths.includes(location.pathname) || 
+                          location.pathname.startsWith('/create/') ||
+                          location.pathname.startsWith('/admin/') ||
+                          location.pathname.startsWith('/form/');
+  
+  return !shouldHideNavbar ? <Navabar /> : null;
+};
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -98,7 +111,11 @@ function App() {
     // Components should listen to isAuthenticated changes and reset themselves
   };
 
-  const setUser = useCallback((data) => {
+  const updateUser = useCallback((updatedUser) => {
+    setUserData(updatedUser);
+  }, []);
+
+  const setUser = useCallback((user) => {
     if (import.meta.env.VITE_DEBUG_API !== 'true') {
       console.log("👤 Updating user data");
     }
@@ -129,72 +146,15 @@ function App() {
     );
   }
 
-  // const [cards, setcards] = useState([
-  //   {
-  //     data: {
-  //       id: 1232212,
-  //       question: "",
-  //       titlePlaceholder: "Question",
-  //       description: "",
-  //       descriptionPlaceholder: "Description",
-  //       option: "Shortanswer",
-  //       required: false,
-  //       select: true,
-  //       name1: "question",
-  //       name2: "description",
-  //     },
-  //     id: 1232212,
-  //     multipleChoice: [{ index: 68798, value: "", id: Date.now() }],
-  //     checkBoxes: [{ index: 156787, value: "", id: Date.now() }],
-  //   },
-  // ]);
-
-  // const [headData, setHeadData] = useState({
-  //   formTitle: "Untitled Form",
-  //   formDescription: "No Description",
-  // });
-
-  // const setCards = (data) => {
-  //   setcards(data);
-  // };
-
-  // const addCard = (info) => {
-  //   setcards((prev) => [...prev, { id: Date.now(), ...info }]);
-  // };
-
-  // const updateCard = (id, info) => {
-  //   setcards((prev) => prev.map((card) => (card.id === id ? info : card)));
-  //   // console.log(cards);
-  // };
-  // const deleteCard = (id) => {
-  //   console.log(id);
-  //   setcards((prev) => prev.filter((card) => card.id != id));
-  // };
-
-  // const setHead = (info) => {
-  //   setHeadData(info);
-  // };
-
-  // const onChangeHandler = (event) => {
-  //   const value = event.target.value;
-  //   const name = event.target.name;
-  //   setHeadData((prev) => ({ ...prev, [name]: value }));
-  // };
-
-  // useEffect(() => {
-  //   if (token) {
-  //     setStatus(true);
-  //   }
-    // console.log(" create cards updated ", cards);
-  // }, [cards]);
-
-
   return (
     <FormProvider
       value={{
         isAuthenticated,
         userData,
+        user: userData, // Alias for compatibility
+        forms: [], // This can be implemented if needed
         setUser,
+        updateUser,
         setIsAuthenticated,
         setUserData,
         logout,
@@ -205,14 +165,15 @@ function App() {
       }}
     >
       <BrowserRouter>
-        <Navabar />
+        <ConditionalNavbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/create/:fId" element={<CreateForm />}/>
           <Route path="/admin/:fId" element={<Admin />}/>
           <Route path="/form/:fId" element={<Form />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<SignUp />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
         <Footer />
       </BrowserRouter>

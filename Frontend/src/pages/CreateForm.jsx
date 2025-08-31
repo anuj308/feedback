@@ -55,15 +55,14 @@ const CreateForm = () => {
   const autoSaveForm = async (formData = null) => {
     if (!fId) return;
     
-    const dataToSave = formData || {
+    const dataToSave =  {
       formTitle: headData.formTitle,
       formDescription: headData.formDescription,
       questions: questions,
-      isAutoSave: true, // Flag to indicate this is an auto-save
+      isAutoSave: true,
     };
 
-    console.log("💾 Auto-saving form:", { formId: fId, questionsCount: questions.length });
-    
+  
     const response = await api.post(endpoints.forms.update(fId), dataToSave);
     console.log("✅ Form auto-saved successfully");
     
@@ -88,6 +87,7 @@ const CreateForm = () => {
       },
     }
   );
+
 
   const addQuestion = useCallback((info) => {
     const newQuestion = { ...createNewQuestion(), ...info };
@@ -143,24 +143,8 @@ const CreateForm = () => {
     setHeadData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const updateForm = async () => {
-    console.log("💾 Updating form:", { formId: fId, questionsCount: questions.length });
-    try {
-      const response = await api.post(endpoints.forms.update(fId), {
-        formTitle: headData.formTitle,
-        formDescription: headData.formDescription,
-        questions: questions,
-      });
-      console.log("✅ Form updated successfully");
-      setHead({
-        formTitle: "Untitled Form",
-        formDescription: "",
-      });
-      navigate("/");
-    } catch (error) {
-      console.error("❌ Error updating form:", error);
-    }
-  };
+
+ 
 
   useEffect(() => {
     const func = async () => {
@@ -174,7 +158,7 @@ const CreateForm = () => {
           questionsCount: form.questions?.length || 0 
         });
         
-        setHead({
+        setHeadData({
           formTitle: form.formTitle,
           formDescription: form.formDescription,
         });
@@ -195,19 +179,7 @@ const CreateForm = () => {
     func();
   }, []);
 
-  // Helper function to extract options from legacy structure
-  const extractOptions = (legacyItem) => {
-    const options = [];
-    if (legacyItem.multipleChoice) {
-      options.push(...legacyItem.multipleChoice.map(mc => mc.value).filter(v => v));
-    }
-    if (legacyItem.checkBoxes) {
-      options.push(...legacyItem.checkBoxes.map(cb => cb.value).filter(v => v));
-    }
-    return options;
-  };
-
-  return (
+      return (
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Navbar */}
       <FormBuilderNavbar

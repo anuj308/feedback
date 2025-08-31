@@ -14,7 +14,7 @@ const questionSchema = new Schema({
   },
   question: {
     type: String,
-    required: true,
+    required: false, // Changed to false to allow empty questions during form building
     default: ""
   },
   description: {

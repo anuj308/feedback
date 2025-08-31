@@ -22,6 +22,47 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
     },
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 500,
+    },
+    settings: {
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'auto'],
+        default: 'light',
+      },
+      notifications: {
+        emailNotifications: {
+          type: Boolean,
+          default: true,
+        },
+        formResponses: {
+          type: Boolean,
+          default: true,
+        },
+        formShared: {
+          type: Boolean,
+          default: true,
+        },
+        weeklyDigest: {
+          type: Boolean,
+          default: false,
+        },
+      },
+      privacy: {
+        profileVisibility: {
+          type: String,
+          enum: ['public', 'private'],
+          default: 'private',
+        },
+        allowFormsInSearch: {
+          type: Boolean,
+          default: true,
+        },
+      },
+    },
     createdForms: [
       {
         type: Schema.Types.ObjectId,
