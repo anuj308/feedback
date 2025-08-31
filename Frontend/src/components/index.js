@@ -12,4 +12,6 @@ import RenameCard from './RenameCard'
 import FormCard from './FormCard'
 import AdminIndividualCard from './AdminIndividualCard'
 import DataAdminCard from './DataAdminCard'
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard}
+import SaveStatusIndicator from './SaveStatusIndicator'
+import AutoSaveSettings from './AutoSaveSettings'
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings}

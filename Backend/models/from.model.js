@@ -74,7 +74,9 @@ const formSchema = new mongoose.Schema(
       shuffleQuestions: { type: Boolean, default: false },
       confirmationMessage: { type: String, default: "Thank you for your response!" },
       showResultsSummary: { type: Boolean, default: false },
-      disableAutoSave: { type: Boolean, default: false }
+      disableAutoSave: { type: Boolean, default: false },
+      autoSaveInterval: { type: Number, default: 2000 }, // milliseconds
+      lastAutoSaved: { type: Date, default: Date.now }
     },
     acceptingResponses: {
       type: Boolean,

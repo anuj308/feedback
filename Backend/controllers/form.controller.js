@@ -30,7 +30,7 @@ const createForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { form }, "Created form successfully"));
 });
 const updateForm = asyncHandler(async (req, res) => {
-  const { questions, formTitle, formDescription } = req.body;
+  const { questions, formTitle, formDescription, isAutoSave = false } = req.body;
   const { formId } = req.params;
 
   if (!questions && !formTitle && !formDescription) {
@@ -42,6 +42,11 @@ const updateForm = asyncHandler(async (req, res) => {
   if (formTitle) updateData.formTitle = formTitle;
   if (formDescription) updateData.formDescription = formDescription;
   
+  // Update last auto-saved timestamp if this is an auto-save
+  if (isAutoSave) {
+    updateData['settings.lastAutoSaved'] = new Date();
+  }
+  
   const form = await Form.findByIdAndUpdate(formId, updateData, { new: true });
   
   if (!form) {
@@ -50,7 +55,7 @@ const updateForm = asyncHandler(async (req, res) => {
   
   return res
     .status(200)
-    .json(new ApiResponse(200, { form }, "Updated form successfully"));
+    .json(new ApiResponse(200, { form }, isAutoSave ? "Form auto-saved successfully" : "Updated form successfully"));
 });
 
 const getForm = asyncHandler(async (req, res) => {
