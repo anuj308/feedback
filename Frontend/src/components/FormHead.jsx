@@ -37,7 +37,7 @@ const FormHead = ({ onChangeHandler, headData, readOnly = false }) => {
           onChange={onChangeHandler}
           name="formDescription"
           value={headData.formDescription}
-          placeholder="Untitled descripttion"
+          placeholder="Form description"
         />
       </div>
     </>

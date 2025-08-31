@@ -80,7 +80,7 @@ const CreateForm = () => {
       console.log("✅ Form updated successfully");
       setHead({
         formTitle: "Untitled Form",
-        formDescription: "No Description",
+        formDescription: "",
       });
       navigate("/");
     } catch (error) {

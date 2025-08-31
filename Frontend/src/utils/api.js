@@ -3,24 +3,29 @@ import axios from 'axios';
 // Create axios instance with default configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
-  timeout: 10000, // 10 seconds timeout
+  timeout: 15000, // 15 seconds timeout (increased from 10s)
   withCredentials: true, // Send cookies with requests
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Debugging flag
+const DEBUG_API = import.meta.env.VITE_DEBUG_API === 'true';
+
 // Request interceptor for debugging and adding auth
 api.interceptors.request.use(
   (config) => {
-    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
-    console.log('📤 Request config:', {
-      method: config.method,
-      url: config.url,
-      data: config.data,
-      params: config.params,
-      headers: config.headers,
-    });
+    if (DEBUG_API) {
+      console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('📤 Request config:', {
+        method: config.method,
+        url: config.url,
+        data: config.data,
+        params: config.params,
+        headers: config.headers,
+      });
+    }
 
     // Add timestamp to requests for debugging
     config.metadata = { startTime: new Date() };
@@ -36,12 +41,14 @@ api.interceptors.request.use(
 // Response interceptor for debugging and error handling
 api.interceptors.response.use(
   (response) => {
-    const endTime = new Date();
-    const duration = endTime - response.config.metadata.startTime;
-    
-    console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${duration}ms)`);
-    console.log('📥 Response data:', response.data);
-    console.log('📊 Response status:', response.status);
+    if (DEBUG_API) {
+      const endTime = new Date();
+      const duration = endTime - response.config.metadata.startTime;
+      
+      console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url} (${duration}ms)`);
+      console.log('📥 Response data:', response.data);
+      console.log('📊 Response status:', response.status);
+    }
     
     return response;
   },
@@ -54,20 +61,24 @@ api.interceptors.response.use(
     const is401 = error.response?.status === 401;
     
     if (isAuthCheck && is401) {
-      console.log(`🔍 Auth check: No valid session found`);
+      if (DEBUG_API) {
+        console.log(`🔍 Auth check: No valid session found`);
+      }
     } else {
       console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url} (${duration}ms)`);
-      console.error('💥 Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        config: {
-          method: error.config?.method,
-          url: error.config?.url,
-          data: error.config?.data,
-        }
-      });
+      if (DEBUG_API) {
+        console.error('💥 Error details:', {
+          message: error.message,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          config: {
+            method: error.config?.method,
+            url: error.config?.url,
+            data: error.config?.data,
+          }
+        });
+      }
     }
 
     // Handle specific error cases
@@ -93,7 +104,9 @@ api.interceptors.response.use(
 export const apiHelpers = {
   // Generic GET request
   get: (url, config = {}) => {
-    console.log(`📖 GET Request: ${url}`);
+    if (DEBUG_API) {
+      console.log(`📖 GET Request: ${url}`);
+    }
     return api.get(url, config);
   },
 

@@ -58,8 +58,7 @@ const formSchema = new mongoose.Schema(
     },
     formDescription: {
       type: String,
-      required: true,
-      default:'No Description'
+      default:''
     },
     questions: {
       type: [questionSchema],

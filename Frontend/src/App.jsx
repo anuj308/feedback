@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
@@ -16,14 +16,20 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState({});
+  const authCheckRef = useRef(false);
 
-  // Check authentication status on app load
+  // Check authentication status on app load (only once)
   useEffect(() => {
-    checkAuthStatus();
+    if (!authCheckRef.current) {
+      authCheckRef.current = true;
+      checkAuthStatus();
+    }
   }, []);
 
-  const checkAuthStatus = async () => {
-    console.log("� Checking authentication status...");
+  const checkAuthStatus = useCallback(async () => {
+    if (import.meta.env.VITE_DEBUG_API !== 'true') {
+      console.log("🔍 Checking authentication status...");
+    }
     setIsLoading(true);
     
     try {
@@ -34,8 +40,9 @@ function App() {
       const isSuccess = response.data.Success || response.data.success || response.status === 200;
       
       if (isSuccess && response.data.data) {
-        console.log("✅ User is authenticated");
-        console.log("👤 User data:", response.data.data);
+        if (import.meta.env.VITE_DEBUG_API !== 'true') {
+          console.log("✅ User authenticated");
+        }
         
         setIsAuthenticated(true);
         setUserData(response.data.data);
@@ -46,7 +53,9 @@ function App() {
     } catch (error) {
       // Handle different error scenarios
       if (error.response?.status === 401) {
-        console.log("🚪 No valid authentication - user needs to login");
+        if (import.meta.env.VITE_DEBUG_API !== 'true') {
+          console.log("🚪 No valid authentication - user needs to login");
+        }
       } else if (error.response?.status) {
         console.log("❌ Auth check failed with status:", error.response.status);
       } else {
@@ -56,30 +65,31 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleAuthFailure = () => {
-    console.log("🧹 Clearing all application data...");
+  const handleAuthFailure = useCallback(() => {
+    if (import.meta.env.VITE_DEBUG_API !== 'true') {
+      console.log("🧹 Clearing authentication data...");
+    }
     
     // Clear authentication state
     setIsAuthenticated(false);
     setUserData({});
-    
-    console.log("✅ All application data cleared");
-  };
+  }, []);
 
-  const logout = async () => {
-    console.log("🚪 Logging out user...");
+  const logout = useCallback(async () => {
+    if (import.meta.env.VITE_DEBUG_API !== 'true') {
+      console.log("🚪 Logging out user...");
+    }
     try {
       await api.post(endpoints.auth.logout);
-      console.log("✅ Logout API call successful");
     } catch (error) {
       console.error("❌ Logout API error:", error);
     } finally {
       // Always clear data regardless of API success/failure
       handleAuthFailure();
     }
-  };
+  }, [handleAuthFailure]);
 
   // Function to reset all application state (for logout)
   const resetAppState = () => {
@@ -88,19 +98,23 @@ function App() {
     // Components should listen to isAuthenticated changes and reset themselves
   };
 
-  const setUser = (data) => {
-    console.log("👤 Updating user data:", data);
+  const setUser = useCallback((data) => {
+    if (import.meta.env.VITE_DEBUG_API !== 'true') {
+      console.log("👤 Updating user data");
+    }
     setUserData(data);
-  };
+  }, []);
 
   // Initialize API instance
   useEffect(() => {
-    console.log("🚀 App initialized with API configuration");
-    console.log("🔧 Environment:", {
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-      nodeEnv: import.meta.env.VITE_NODE_ENV,
-      debugApi: import.meta.env.VITE_DEBUG_API,
-    });
+    if (import.meta.env.VITE_DEBUG_API === 'true') {
+      console.log("🚀 App initialized with API configuration");
+      console.log("🔧 Environment:", {
+        apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+        nodeEnv: import.meta.env.VITE_NODE_ENV,
+        debugApi: import.meta.env.VITE_DEBUG_API,
+      });
+    }
   }, []);
 
   // Show loading spinner while checking auth
@@ -183,11 +197,11 @@ function App() {
         setUser,
         setIsAuthenticated,
         setUserData,
-        login,
         logout,
         checkAuthStatus,
         resetAppState,
         isLoading,
+        setIsLoading,
       }}
     >
       <BrowserRouter>

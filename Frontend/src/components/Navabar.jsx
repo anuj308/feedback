@@ -18,7 +18,7 @@ const Navabar = () => {
     try {
       const response = await api.post(endpoints.forms.create, {
         formTitle: "Untitled Form",
-        formDescription: "No Description",
+        formDescription: "",
         data: [
           {
             data: {

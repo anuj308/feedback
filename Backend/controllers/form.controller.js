@@ -17,7 +17,7 @@ const createForm = asyncHandler(async (req, res) => {
   const form = await Form.create({
     questions: questions || [],
     formTitle: formTitle || "Untitled Form",
-    formDescription: formDescription || "No Description",
+    formDescription: formDescription || "",
     Owner: req.user._id,
   });
   
@@ -71,7 +71,6 @@ const getForm = asyncHandler(async (req, res) => {
 
 const getAllFormByOwnerId = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
-  console.log("Owner ID from middleware:", ownerId);
 
   const form = await Form.aggregate([
     {

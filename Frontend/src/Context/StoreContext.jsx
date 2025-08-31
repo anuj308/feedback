@@ -6,11 +6,11 @@ export const FormContext = createContext({
   setUser: () => {},
   setIsAuthenticated: () => {},
   setUserData: () => {},
-  login: async () => {},
   logout: async () => {},
   checkAuthStatus: async () => {},
   resetAppState: () => {},
   isLoading: false,
+  setIsLoading: () => {},
   // Legacy support (gradually remove these)
   status: false,
   token: "",
