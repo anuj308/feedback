@@ -9,29 +9,11 @@ const Home = () => {
   const navigate = useNavigate();
   const {
     isAuthenticated,
-    userData: contextUserData,
+    userData, 
     setHead,
   } = useForms();
-  
-  // Use userData from context (more reliable) or fallback to localStorage
-  const userData = contextUserData || (() => {
-    try {
-      const stored = localStorage.getItem("userData");
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  })();
   const [showRename, setShowRename] = useState(false);
 
-  // Clear forms data when user is no longer authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      console.log("🧹 User not authenticated, clearing forms data");
-      setAllForms([]);
-      setShowRename(false);
-    }
-  }, [isAuthenticated]);
   const deleteForm = async (id) => {
     console.log("🗑️ Deleting form:", id);
     try {
@@ -39,8 +21,10 @@ const Home = () => {
       console.log("✅ Form deleted successfully");
       
       // Refresh forms list
-      const formsResponse = await api.get(endpoints.forms.getByOwner(userData._id));
-      setAllForms(formsResponse.data.data.form);
+      if (isAuthenticated) {
+        const formsResponse = await api.get(endpoints.forms.getByOwner());
+        setAllForms(formsResponse.data.data.form);
+      }
     } catch (error) {
       console.error("❌ Error deleting form:", error);
     }
@@ -68,8 +52,7 @@ const Home = () => {
     setShowRename(true);
   };
 
-  const cleanfun =()=>{
-    localStorage.removeItem("cards");
+  const cleanfun = () => {
     setHead({
       formTitle: "Untitled Form",
       formDescription: "No Description",
@@ -78,30 +61,19 @@ const Home = () => {
 
   useEffect(() => {
     const fetchForms = async () => {
-      if (!isAuthenticated || !userData?._id) {
-        console.log("⏭️ Skipping form fetch - user not authenticated or userData missing");
-        return;
-      }
-
+      
       try {
-        console.log("📋 Fetching forms for user:", userData._id);
-        const response = await api.get(endpoints.forms.getByOwner(userData._id));
-        console.log("📄 Forms loaded:", response.data.data.form.length, "forms");
+        const response = await api.get(endpoints.forms.getByOwner());
         setAllForms(response.data.data.form);
       } catch (error) {
-        console.error("❌ Error while fetching all forms:", error);
-        // If it's an auth error, the user might need to log in again
-        if (error.response?.status === 401) {
-          setAllForms([]); // Clear forms on auth error
-        }
+        console.error("❌ Error while fetching forms:", error);
+        setAllForms([]);
       }
     };
-
-    // Only fetch if authenticated and we don't already have forms (unless refreshing)
-    if (isAuthenticated && userData?._id && allForms.length === 0) {
-      fetchForms();
-    }
-  }, [showRename, isAuthenticated, userData]);
+    
+    navigate("/")
+    fetchForms();
+  }, [isAuthenticated]);
   return (
     <>
       {showRename && (

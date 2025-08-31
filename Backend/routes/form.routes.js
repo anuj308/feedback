@@ -24,7 +24,7 @@ router
   .patch(verifyJWT, renameForm)
   .post(verifyJWT, updateForm);
 
-router.route("/o/:ownerId").get(verifyJWT,getAllFormByOwnerId)
+router.route("/o").get(verifyJWT,getAllFormByOwnerId)
 
 router.route("/admin/:formId").get(verifyJWT,toogleResponses)
 

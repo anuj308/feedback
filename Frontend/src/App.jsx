@@ -39,7 +39,6 @@ function App() {
         
         setIsAuthenticated(true);
         setUserData(response.data.data);
-        localStorage.setItem("userData", JSON.stringify(response.data.data));
       } else {
         console.log("❌ User not authenticated - invalid response format");
         handleAuthFailure();
@@ -66,55 +65,7 @@ function App() {
     setIsAuthenticated(false);
     setUserData({});
     
-    // Clear all localStorage data
-    localStorage.removeItem("userData");
-    localStorage.removeItem("token"); // Remove any old localStorage tokens
-    localStorage.removeItem("cards"); // Remove any old form cards
-    localStorage.removeItem("questions"); // Remove any form questions
-    localStorage.removeItem("formData"); // Remove any form data
-    
-    // Clear any other localStorage items that might contain user data
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      // Remove any keys that might contain user-specific data
-      if (key && (key.includes('form') || key.includes('user') || key.includes('auth'))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    
     console.log("✅ All application data cleared");
-  };
-
-  const login = async (credentials) => {
-    try {
-      const response = await api.post(endpoints.auth.login, credentials);
-      
-      // Check for success (handle both 'Success' and 'success' properties)
-      const isSuccess = response.data.Success || response.data.success || response.status === 200;
-      
-      if (isSuccess && response.data.data) {
-        console.log("✅ Login successful");
-        console.log("👤 User data:", response.data.data);
-        
-        setIsAuthenticated(true);
-        setUserData(response.data.data);
-        localStorage.setItem("userData", JSON.stringify(response.data.data));
-        return { success: true };
-      } else {
-        return { 
-          success: false, 
-          error: "Invalid response from server" 
-        };
-      }
-    } catch (error) {
-      console.error("❌ Login failed:", error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || "Login failed" 
-      };
-    }
   };
 
   const logout = async () => {
@@ -217,14 +168,6 @@ function App() {
   // };
 
   // useEffect(() => {
-  //   const cards = JSON.parse(localStorage.getItem("cards"));
-  //   if (cards && cards.length > 0) {
-  //     setcards(cards);
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   localStorage.setItem("cards", JSON.stringify(cards));
   //   if (token) {
   //     setStatus(true);
   //   }
@@ -238,6 +181,8 @@ function App() {
         isAuthenticated,
         userData,
         setUser,
+        setIsAuthenticated,
+        setUserData,
         login,
         logout,
         checkAuthStatus,

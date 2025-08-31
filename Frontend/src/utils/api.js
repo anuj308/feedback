@@ -73,9 +73,6 @@ api.interceptors.response.use(
     // Handle specific error cases
     if (error.response?.status === 401 && !isAuthCheck) {
       console.warn('🔐 Unauthorized - redirecting to login');
-      // Clear any stored auth data
-      localStorage.removeItem('token');
-      localStorage.removeItem('userData');
       // Only redirect if it's not the initial auth check
       window.location.href = '/login';
     }
@@ -163,7 +160,7 @@ export const endpoints = {
     update: (id) => `/form/f/${id}`,
     delete: (id) => `/form/f/${id}`,
     rename: (id) => `/form/f/${id}`,
-    getByOwner: (ownerId) => `/form/o/${ownerId}`,
+    getByOwner: () => `/form/o`,
     toggleResponses: (id) => `/form/admin/${id}`,
     analytics: (id) => `/form/analytics/${id}`,
     responses: (id) => `/form/responses/${id}`,

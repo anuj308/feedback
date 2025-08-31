@@ -70,7 +70,8 @@ const getForm = asyncHandler(async (req, res) => {
 });
 
 const getAllFormByOwnerId = asyncHandler(async (req, res) => {
-  const { ownerId } = req.params;
+  const ownerId = req.user._id;
+  console.log("Owner ID from middleware:", ownerId);
 
   const form = await Form.aggregate([
     {

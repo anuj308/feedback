@@ -78,7 +78,6 @@ const CreateForm = () => {
         questions: questions,
       });
       console.log("✅ Form updated successfully");
-      localStorage.removeItem("questions");
       setHead({
         formTitle: "Untitled Form",
         formDescription: "No Description",
@@ -115,8 +114,6 @@ const CreateForm = () => {
           // Initialize with one empty question if no questions exist
           setQuestions([createNewQuestion()]);
         }
-        
-        localStorage.setItem("questions", JSON.stringify(form.questions || []));
       } catch (error) {
         console.log("Error while fetching the create form", error);
         // Initialize with one empty question on error

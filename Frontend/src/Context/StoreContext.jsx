@@ -4,6 +4,8 @@ export const FormContext = createContext({
   isAuthenticated: false,
   userData: {},
   setUser: () => {},
+  setIsAuthenticated: () => {},
+  setUserData: () => {},
   login: async () => {},
   logout: async () => {},
   checkAuthStatus: async () => {},

@@ -5,21 +5,37 @@ import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
 
 const Login = () => {
-  const { login, isAuthenticated } = useForms();
+  const { isAuthenticated, setUser, setIsAuthenticated, setUserData } = useForms();
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
   
   const handleLogin = async (data) => {
-    console.log("🔐 Attempting login");
+    console.log("🔐 Attempting login with data:", data);
     setError("");
     
-    const result = await login(data);
-    
-    if (result.success) {
-      navigate("/");
-    } else {
-      setError(result.error);
+    try {
+      const response = await api.post(endpoints.auth.login, data);
+      
+      // Check for success
+      const isSuccess = response.data.Success || response.data.success || response.status === 200;
+      
+      if (isSuccess && response.data.data) {
+        console.log("✅ Login successful");
+        console.log("👤 User data:", response.data.data);
+        
+        // Update authentication state directly
+        setIsAuthenticated(true);
+        setUserData(response.data.data);
+        console.log(response)
+        console.log("🏠 Navigating to home...");
+        // navigate("/");
+      } else {
+        setError("Invalid response from server");
+      }
+    } catch (error) {
+      console.error("❌ Login failed:", error);
+      setError(error.response?.data?.message || "Login failed");
     }
   };
   
@@ -29,7 +45,7 @@ const Login = () => {
       navigate("/");
     }
   }, [isAuthenticated, navigate]);
-
+  
   return (
     <>
       <section className="bg-gray-50 dark:bg-gray-900">
