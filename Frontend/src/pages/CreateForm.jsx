@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
-import { FormHead, InputCard, AutoSaveSettings, FormBuilderNavbar, PublishModal } from "../components/index";
+import { FormHead, InputCard, FormSettings, FormBuilderNavbar, PublishModal } from "../components/index";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { api, endpoints } from "../utils/api";
@@ -18,6 +18,20 @@ const CreateForm = () => {
   const [autoSaveSettings, setAutoSaveSettings] = useState({
     disableAutoSave: false,
     autoSaveInterval: 2000,
+  });
+  const [formSettings, setFormSettings] = useState({
+    isQuiz: false,
+    collectEmail: false,
+    requireSignIn: false,
+    limitToOneResponse: false,
+    allowResponseEditing: true,
+    showProgressBar: false,
+    shuffleQuestions: false,
+    confirmationMessage: "Thank you for your response!",
+    showResultsSummary: false,
+    disableAutoSave: false,
+    autoSaveInterval: 2000,
+    allowedEmails: [],
   });
   const [currentTab, setCurrentTab] = useState("create");
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -120,6 +134,14 @@ const CreateForm = () => {
 
   const handleAutoSaveSettingsChange = (newSettings) => {
     setAutoSaveSettings(newSettings);
+    
+    // Also update the form settings state
+    setFormSettings(prev => ({
+      ...prev,
+      disableAutoSave: newSettings.disableAutoSave,
+      autoSaveInterval: newSettings.autoSaveInterval,
+    }));
+    
     console.log("🔧 Auto-save settings updated:", newSettings);
   };
 
@@ -162,6 +184,32 @@ const CreateForm = () => {
           formTitle: form.formTitle,
           formDescription: form.formDescription,
         });
+        
+        // Load form settings
+        if (form.settings) {
+          const settings = {
+            isQuiz: form.settings.isQuiz || false,
+            collectEmail: form.settings.collectEmail || false,
+            requireSignIn: form.settings.requireSignIn || false,
+            limitToOneResponse: form.settings.limitToOneResponse || false,
+            allowResponseEditing: form.settings.allowResponseEditing !== false,
+            showProgressBar: form.settings.showProgressBar || false,
+            shuffleQuestions: form.settings.shuffleQuestions || false,
+            confirmationMessage: form.settings.confirmationMessage || "Thank you for your response!",
+            showResultsSummary: form.settings.showResultsSummary || false,
+            disableAutoSave: form.settings.disableAutoSave || false,
+            autoSaveInterval: form.settings.autoSaveInterval || 2000,
+            allowedEmails: form.settings.allowedEmails || [],
+          };
+          
+          setFormSettings(settings);
+          
+          // Update auto-save specific settings for the hook
+          setAutoSaveSettings({
+            disableAutoSave: settings.disableAutoSave,
+            autoSaveInterval: settings.autoSaveInterval,
+          });
+        }
         
         // Use new questions structure only
         if (form.questions && form.questions.length > 0) {
@@ -257,20 +305,14 @@ const CreateForm = () => {
         {/* Settings Tab */}
         {currentTab === "settings" && (
           <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="bg-white rounded-lg shadow-sm border dark:bg-gray-800 border-gray-200 p-6 dark:border-gray-700">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Form Settings</h2>
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Form Settings</h2>
               
-              {/* Auto-save Settings */}
-              <AutoSaveSettings 
+              {/* Comprehensive Form Settings */}
+              <FormSettings 
                 formId={fId}
                 onSettingsChange={handleAutoSaveSettingsChange}
               />
-              
-              {/* Additional settings can go here */}
-              <div className="mt-8 p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
-                <h3 className="text-lg font-semibold mb-2">More Settings Coming Soon</h3>
-                <p className="text-gray-600 ">Additional form customization options will be available here.</p>
-              </div>
             </div>
           </div>
         )}
