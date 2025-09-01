@@ -81,8 +81,12 @@ const formSchema = new mongoose.Schema(
     },
     acceptingResponses: {
       type: Boolean,
-      default: true,
-    },  
+      default: false,
+    },
+    isPublished: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

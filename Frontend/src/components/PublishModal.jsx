@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api, endpoints } from '../utils/api';
 
-const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
+const PublishModal = ({ isOpen, onClose, formId, formTitle, onSettingsUpdated, isPublished }) => {
   const [publishSettings, setPublishSettings] = useState({
-    acceptingResponses: true,
-    isPublic: true,
     allowedEmails: [],
     requireSignIn: false,
-    limitToOneResponse: false,
-    showProgressBar: false,
-    confirmationMessage: "Thank you for your response!",
   });
   
+  const [acceptingResponses, setAcceptingResponses] = useState(true);
   const [newEmail, setNewEmail] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [formLink, setFormLink] = useState('');
@@ -35,14 +31,12 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
       const settings = form.settings || {};
       
       setPublishSettings({
-        acceptingResponses: form.acceptingResponses || true,
-        isPublic: !settings.requireSignIn,
         allowedEmails: settings.allowedEmails || [],
         requireSignIn: settings.requireSignIn || false,
-        limitToOneResponse: settings.limitToOneResponse || false,
-        showProgressBar: settings.showProgressBar || false,
-        confirmationMessage: settings.confirmationMessage || "Thank you for your response!",
       });
+      
+      // Set accepting responses from form data
+      setAcceptingResponses(form.acceptingResponses !== false);
     } catch (error) {
       console.error('Error fetching form settings:', error);
     }
@@ -51,19 +45,32 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
   const handlePublish = async () => {
     setIsPublishing(true);
     try {
-      // Update form settings
-      await api.patch(endpoints.forms.settings(formId), {
-        settings: {
-          requireSignIn: publishSettings.requireSignIn,
-          limitToOneResponse: publishSettings.limitToOneResponse,
-          showProgressBar: publishSettings.showProgressBar,
-          confirmationMessage: publishSettings.confirmationMessage,
-          allowedEmails: publishSettings.allowedEmails,
-        },
-        acceptingResponses: publishSettings.acceptingResponses,
-      });
+      if (isPublished) {
+        // Update settings for already published form including accepting responses
+        await api.patch(endpoints.forms.settings(formId), {
+          settings: {
+            requireSignIn: publishSettings.requireSignIn,
+            allowedEmails: publishSettings.allowedEmails,
+          },
+          acceptingResponses: acceptingResponses
+        });
+      } else {
+        // Publish the form for the first time (automatically set accepting responses to true)
+        await api.patch(endpoints.forms.publish(formId), {
+          settings: {
+            requireSignIn: publishSettings.requireSignIn,
+            allowedEmails: publishSettings.allowedEmails,
+          }
+        });
+      }
       
       console.log('✅ Form published successfully');
+      
+      // Call the callback to refresh parent component data
+      if (onSettingsUpdated) {
+        onSettingsUpdated();
+      }
+      
       onClose();
     } catch (error) {
       console.error('❌ Error publishing form:', error);
@@ -108,7 +115,9 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Publish Form</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {isPublished ? 'Form Settings' : 'Publish Form'}
+            </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{formTitle}</p>
           </div>
           <button
@@ -143,63 +152,6 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
             </div>
           </div>
 
-          {/* Response Collection */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Response Collection</h3>
-            <div className="space-y-4">
-              
-              {/* Accept Responses Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Accept responses</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Allow people to submit responses to this form</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={publishSettings.acceptingResponses}
-                    onChange={(e) => setPublishSettings(prev => ({ ...prev, acceptingResponses: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {/* Limit to One Response */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Limit to one response</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Each person can submit only one response</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={publishSettings.limitToOneResponse}
-                    onChange={(e) => setPublishSettings(prev => ({ ...prev, limitToOneResponse: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-
-              {/* Show Progress Bar */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Show progress bar</label>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Display completion progress to respondents</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={publishSettings.showProgressBar}
-                    onChange={(e) => setPublishSettings(prev => ({ ...prev, showProgressBar: e.target.checked }))}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                </label>
-              </div>
-            </div>
-          </div>
 
           {/* Access Control */}
           <div>
@@ -276,19 +228,27 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
             </div>
           </div>
 
-          {/* Confirmation Message */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Confirmation message
-            </label>
-            <textarea
-              value={publishSettings.confirmationMessage}
-              onChange={(e) => setPublishSettings(prev => ({ ...prev, confirmationMessage: e.target.value }))}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              placeholder="Message shown after form submission"
-            />
-          </div>
+          {/* Accepting Responses Toggle - Only show for published forms */}
+          {isPublished && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">Response Collection</h3>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Accepting responses</label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Allow new responses to be submitted</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptingResponses}
+                    onChange={(e) => setAcceptingResponses(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -304,7 +264,7 @@ const PublishModal = ({ isOpen, onClose, formId, formTitle }) => {
             disabled={isPublishing}
             className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isPublishing ? 'Publishing...' : 'Publish Form'}
+            {isPublishing ? (isPublished ? 'Saving...' : 'Publishing...') : (isPublished ? 'Save' : 'Publish')}
           </button>
         </div>
       </div>

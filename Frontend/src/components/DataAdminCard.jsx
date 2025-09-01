@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import Form from "../pages/Form.jsx";
 import { Input, MultipeChoice, Select, CheckBox } from "./index.js";
+
 const DataAdminCard = ({
   card,
   id,
@@ -11,63 +11,64 @@ const DataAdminCard = ({
   multipleChoice,
   checkBoxes,
 }) => {
-  // const [checkBoxesF, setCheckboxesF] = useState(checkBoxes);
-
-  // const [answer, setAnswer] = useState("");
-
-  // const onChangeHandler = (event) => {
-  //   const value = event.target.value;
-  //   setAnswer(value);
-  // };
-
-  // const checkAnsFunc = (event, info) => {
-  //   const id = info.id;
-  //   console.log(id, info);
-  //   setCheckboxesF((prev) => prev.map((ch) => (ch.id == id ? info : ch)));
-  // };
-
   useEffect(() => {
     console.log(card);
   }, []);
 
-  return (
-    <div
-      className="mx-auto bg-red-400 dark:bg-red-600 border border-red-300 dark:border-red-500 rounded-2xl m-3"
-      key={id}
-      // onClick={() => updateCard(id, {id,data:{id,option,question,description,answer},multipleChoice,checkBoxes:checkBoxesF})}
-    >
-      {/* <div className="flex flex-row bg-red-700 px-6 pt-4 rounded-2xl pb-2">
-        <div className="w-full">
-          <input
-            type="text"
-            className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor  `}
-            value={card.data.question}
-            disabled
-          />
-
-          {card.data.description && (
-            <input
-              type="text"
-              className={`mb-6 bg-white  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 cursor  `}
-              value={card.data.description}
-              disabled
-            />
-          )}
+  const renderAnswer = () => {
+    const answer = card.data.answer;
+    
+    if (!answer) {
+      return <span className="text-gray-400 italic">No answer provided</span>;
+    }
+    
+    if (Array.isArray(answer)) {
+      return (
+        <div className="space-y-1">
+          {answer.map((item, index) => (
+            <span key={index} className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded mr-1 mb-1">
+              {item}
+            </span>
+          ))}
         </div>
-      </div> */}
-      <div className="px-6 pt-4 m-3 flex flex-col justify-between">
-      <input
-            type="text"
-            className={`mb-6 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 border border-gray-300 dark:border-gray-600 block w-full p-2.5 cursor-not-allowed`}
-            value={card.data.question}
-            disabled
-          />
-        <Input
-          type="text"
-          placeholder={"Your answer"}
-          name="answer"
-          value={card.data.answer}
-        />
+      );
+    }
+    
+    return <span className="text-gray-900 dark:text-white">{answer}</span>;
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-4 mb-4">
+      {/* Question */}
+      <div className="mb-3">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Question:
+        </label>
+        <p className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+          {card.data.question}
+        </p>
+      </div>
+
+      {/* Description if available */}
+      {card.data.description && (
+        <div className="mb-3">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Description:
+          </label>
+          <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-3 rounded-md">
+            {card.data.description}
+          </p>
+        </div>
+      )}
+
+      {/* Answer */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Answer:
+        </label>
+        <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-md min-h-[40px] flex items-center">
+          {renderAnswer()}
+        </div>
       </div>
     </div>
   );

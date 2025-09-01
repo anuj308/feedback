@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForms } from '../Context/StoreContext';
 import UserProfileDropdown from './UserProfileDropdown';
@@ -10,10 +10,25 @@ const FormBuilderNavbar = ({
   onSave,
   onPublish,
   currentTab = "create",
-  onTabChange
+  onTabChange,
+  isPublished = false,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, userData } = useForms();
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowPublishedMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleBackToHome = () => {
     if (hasUnsavedChanges) {
@@ -135,18 +150,41 @@ const FormBuilderNavbar = ({
               {isSaving ? 'Saving...' : 'Save'}
             </button>
 
-            {/* Publish button */}
-            <button
-              onClick={onPublish}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-            >
-              <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                <span>Publish</span>
+            {/* Publish/Published button */}
+            {!isPublished ? (
+              <button
+                onClick={onPublish}
+                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span>Publish</span>
+                </div>
+              </button>
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => {
+                            onPublish();
+                            setShowPublishedMenu(false);
+                          }}
+                  className="px-6 py-2 text-sm font-medium text-white bg-green-600 dark:bg-green-500 border border-transparent rounded-md hover:bg-green-700 dark:hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                >
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Published</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     
+                    </svg>
+                  </div>
+                </button>
+                
               </div>
-            </button>
+            )}
 
             {/* User Profile */}
             {isAuthenticated && (

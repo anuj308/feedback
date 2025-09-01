@@ -10,6 +10,8 @@ import {
   getFormAnalytics,
   getFormResponses,
   updateFormSettings,
+  deleteAllResponses,
+  publishForm,
 } from "../controllers/form.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 
@@ -26,12 +28,14 @@ router
 
 router.route("/o").get(verifyJWT,getAllFormByOwnerId)
 
-router.route("/admin/:formId").get(verifyJWT,toogleResponses)
+router.route("/admin/:formId").patch(verifyJWT,toogleResponses)
 
 // New analytics routes
 router.route("/analytics/:formId").get(verifyJWT, getFormAnalytics)
 router.route("/responses/:formId").get(verifyJWT, getFormResponses)
+router.route("/responses/:formId").delete(verifyJWT, deleteAllResponses)
 router.route("/settings/:formId").patch(verifyJWT, updateFormSettings)
+router.route("/publish/:formId").patch(verifyJWT, publishForm)
 
 
 export default router;

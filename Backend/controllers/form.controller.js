@@ -163,24 +163,54 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized to view analytics for this form");
   }
 
-  const responses = await Store.find({ formId });
+  // Check if form is published
+  if (!form.isPublished) {
+    return res.status(200).json(new ApiResponse(200, {
+      isPublished: false,
+      message: "Publish your form to see analytics",
+      formTitle: form.formTitle
+    }, "Form not published"));
+  }
+
+  const responses = await Store.find({ formId }).populate('respondentUser', 'fullName email');
   
   const analytics = {
+    isPublished: true,
     formInfo: {
       formId: form._id,
       formTitle: form.formTitle,
       formDescription: form.formDescription,
       createdAt: form.createdAt,
-      acceptingResponses: form.acceptingResponses
+      acceptingResponses: form.acceptingResponses,
+      isPublished: form.isPublished
     },
     totalResponses: responses.length,
-    questions: []
+    completionRate: responses.length > 0 ? 100 : 0, // Can be enhanced with partial responses tracking
+    averageScore: null, // For quiz forms
+    questionStats: [],
+    responseRate: {
+      daily: {},
+      weekly: {},
+      monthly: {}
+    }
   };
+
+  // Calculate response rates by time periods
+  responses.forEach(response => {
+    const date = new Date(response.createdAt);
+    const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+    const weekKey = `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+    analytics.responseRate.daily[dateKey] = (analytics.responseRate.daily[dateKey] || 0) + 1;
+    analytics.responseRate.weekly[weekKey] = (analytics.responseRate.weekly[weekKey] || 0) + 1;
+    analytics.responseRate.monthly[monthKey] = (analytics.responseRate.monthly[monthKey] || 0) + 1;
+  });
 
   // Process questions from the new structure
   const questions = form.questions || [];
 
-  analytics.questions = questions.map((question, index) => {
+  analytics.questionStats = questions.map((question, index) => {
     const questionResponses = responses.map(response => {
       if (response.answers && Array.isArray(response.answers)) {
         return response.answers.find(answer => answer.questionId === question.questionId);
@@ -192,18 +222,28 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
       questionId: question.questionId,
       question: question.question,
       type: question.type,
+      required: question.required || false,
       totalResponses: questionResponses.length,
+      responseCount: questionResponses.length,
+      skippedCount: responses.length - questionResponses.length,
       responses: questionResponses.map(r => r.answer)
     };
 
     // Add specific analytics based on question type
-    if (question.type === 'multipleChoice' || question.type === 'dropdown') {
+    if (question.type === 'multiple-choice' || question.type === 'dropdown') {
       const answerCounts = {};
       questionResponses.forEach(response => {
         const answer = response.answer;
         answerCounts[answer] = (answerCounts[answer] || 0) + 1;
       });
       questionAnalytics.answerDistribution = answerCounts;
+      
+      // Calculate percentages
+      questionAnalytics.answerPercentages = {};
+      Object.keys(answerCounts).forEach(answer => {
+        questionAnalytics.answerPercentages[answer] = 
+          ((answerCounts[answer] / questionResponses.length) * 100).toFixed(1);
+      });
     }
 
     if (question.type === 'checkboxes') {
@@ -217,10 +257,54 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
         }
       });
       questionAnalytics.optionDistribution = optionCounts;
+      
+      // Calculate percentages for checkboxes
+      questionAnalytics.optionPercentages = {};
+      Object.keys(optionCounts).forEach(option => {
+        questionAnalytics.optionPercentages[option] = 
+          ((optionCounts[option] / questionResponses.length) * 100).toFixed(1);
+      });
     }
+
+    if (question.type === 'short-answer' || question.type === 'paragraph') {
+      // For text responses, provide word count analysis
+      const wordCounts = questionResponses.map(response => {
+        const answer = response.answer || '';
+        return answer.toString().split(/\s+/).filter(word => word.length > 0).length;
+      });
+      
+      if (wordCounts.length > 0) {
+        questionAnalytics.textAnalytics = {
+          averageWordCount: (wordCounts.reduce((sum, count) => sum + count, 0) / wordCounts.length).toFixed(1),
+          minWordCount: Math.min(...wordCounts),
+          maxWordCount: Math.max(...wordCounts),
+          totalWords: wordCounts.reduce((sum, count) => sum + count, 0)
+        };
+      }
+    }
+
+    // Calculate response rate for this question
+    questionAnalytics.responseRate = ((questionResponses.length / responses.length) * 100).toFixed(1);
 
     return questionAnalytics;
   });
+
+  // Calculate quiz-specific analytics if this is a quiz
+  if (form.settings && form.settings.isQuiz) {
+    let totalScore = 0;
+    let scoredResponses = 0;
+
+    responses.forEach(response => {
+      if (response.score !== undefined && response.score !== null) {
+        totalScore += response.score;
+        scoredResponses++;
+      }
+    });
+
+    if (scoredResponses > 0) {
+      analytics.averageScore = (totalScore / scoredResponses).toFixed(1);
+    }
+  }
 
   res.status(200).json(new ApiResponse(200, analytics, "Form analytics retrieved successfully"));
 });
@@ -248,16 +332,66 @@ const getFormResponses = asyncHandler(async (req, res) => {
 
   const totalResponses = await Store.countDocuments({ formId });
 
+  // Enhance response data with question information
+  const enhancedResponses = responses.map(response => {
+    const enhancedAnswers = response.answers ? response.answers.map(answer => {
+      // Find the corresponding question
+      const question = form.questions.find(q => q.questionId === answer.questionId);
+      return {
+        ...answer,
+        question: question ? question.question : `Question ${answer.questionId}`,
+        questionType: question ? question.type : 'unknown'
+      };
+    }) : [];
+
+    return {
+      ...response.toObject(),
+      answers: enhancedAnswers,
+      respondentName: response.respondentUser ? response.respondentUser.fullName : 'Anonymous',
+      respondentEmail: response.respondentUser ? response.respondentUser.email : null
+    };
+  });
+
   res.status(200).json(new ApiResponse(200, {
-    responses,
+    responses: enhancedResponses,
     totalPages: Math.ceil(totalResponses / limit),
-    currentPage: page,
+    currentPage: parseInt(page),
     totalResponses,
+    hasNextPage: page < Math.ceil(totalResponses / limit),
+    hasPrevPage: page > 1,
     formInfo: {
       formTitle: form.formTitle,
-      formDescription: form.formDescription
+      formDescription: form.formDescription,
+      questionCount: form.questions ? form.questions.length : 0
     }
   }, "Form responses retrieved successfully"));
+});
+
+// Delete all responses for a form
+const deleteAllResponses = asyncHandler(async (req, res) => {
+  const { formId } = req.params;
+
+  if (!formId) {
+    throw new ApiError(400, "Form ID is required");
+  }
+
+  const form = await Form.findById(formId);
+  if (!form) {
+    throw new ApiError(404, "Form not found");
+  }
+
+  // Check if user owns the form
+  if (form.Owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to delete responses for this form");
+  }
+
+  // Delete all responses for this form
+  const deleteResult = await Store.deleteMany({ formId });
+
+  res.status(200).json(new ApiResponse(200, {
+    deletedCount: deleteResult.deletedCount,
+    formId: formId
+  }, `Successfully deleted ${deleteResult.deletedCount} responses`));
 });
 
 // Update form settings
@@ -300,6 +434,44 @@ const updateFormSettings = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, updatedForm, "Form settings updated successfully"));
 });
 
+// Publish form endpoint
+const publishForm = asyncHandler(async (req, res) => {
+  const { formId } = req.params;
+  const { settings } = req.body;
+
+  if (!formId) {
+    throw new ApiError(400, "Form ID is required");
+  }
+
+  const form = await Form.findById(formId);
+  if (!form) {
+    throw new ApiError(404, "Form not found");
+  }
+
+  // Check if user owns the form
+  if (form.Owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to publish this form");
+  }
+
+  const updateData = {
+    isPublished: true,
+    acceptingResponses: true
+  };
+  
+  // Update settings if provided
+  if (settings) {
+    updateData.settings = { ...form.settings.toObject(), ...settings };
+  }
+
+  const updatedForm = await Form.findByIdAndUpdate(
+    formId,
+    { $set: updateData },
+    { new: true }
+  );
+
+  res.status(200).json(new ApiResponse(200, updatedForm, "Form published successfully"));
+});
+
 
 export {
   createForm,
@@ -311,5 +483,7 @@ export {
   toogleResponses,
   getFormAnalytics,
   getFormResponses,
-  updateFormSettings
+  updateFormSettings,
+  deleteAllResponses,
+  publishForm
 };

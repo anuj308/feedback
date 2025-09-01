@@ -39,14 +39,47 @@ const Admin = () => {
   const toggleResponse = async () => {
     console.log("🔄 Toggling form responses for formId:", formId);
     try {
+      // Use the settings endpoint to update accepting responses
       const response = await api.patch(endpoints.forms.settings(formId), {
-        acceptingResponses: !form?.settings?.acceptingResponses
+        acceptingResponses: !form?.acceptingResponses
       });
-      console.log("✅ Form settings updated successfully");
-      // Refresh form data
+      console.log("✅ Form response setting updated successfully");
+      // Update local state immediately for better UX
+      setForm(prev => ({
+        ...prev,
+        acceptingResponses: !prev?.acceptingResponses
+      }));
+      // Refresh form data to ensure consistency
       fetchFormData();
     } catch (error) {
-      console.error("❌ Error updating form settings:", error);
+      console.error("❌ Error updating form response setting:", error);
+      // Revert local state on error
+      setForm(prev => ({
+        ...prev,
+        acceptingResponses: prev?.acceptingResponses
+      }));
+      alert("Failed to update response setting. Please try again.");
+    }
+  };
+
+  const deleteAllResponses = async () => {
+    if (!window.confirm("Are you sure you want to delete all responses? This action cannot be undone.")) {
+      return;
+    }
+    
+    console.log("🗑️ Deleting all responses for formId:", formId);
+    try {
+      const response = await api.delete(endpoints.forms.deleteAllResponses(formId));
+      console.log("✅ All responses deleted successfully");
+      // Refresh data after deletion
+      await Promise.all([
+        fetchAnalytics(),
+        fetchResponses()
+      ]);
+      setDropDown(false); // Close dropdown
+    } catch (error) {
+      console.error("❌ Error deleting responses:", error);
+      alert("Failed to delete responses. Please try again.");
     }
   };
 
@@ -76,8 +109,8 @@ const Admin = () => {
     console.log("📋 Fetching responses for formId:", formId);
     try {
       const responsesResponse = await api.get(endpoints.forms.responses(formId));
-      console.log("📝 Responses loaded:", responsesResponse.data.data.length, "responses");
-      setResponses(responsesResponse.data.data);
+      console.log("📝 Responses loaded:", responsesResponse.data.data.responses.length, "responses");
+      setResponses(responsesResponse.data.data.responses || []);
     } catch (error) {
       console.error("❌ Error fetching responses:", error);
     }
@@ -101,212 +134,298 @@ const Admin = () => {
 
   if (loading) {
     return (
-      <div className="mx-auto w-1/2 mt-28 rounded overflow-hidden shadow-lg">
-        <div className="text-center p-8">Loading analytics...</div>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-300">Loading analytics...</p>
+          </div>
+        </div>
       </div>
     );
   }
-  return (
-    <div className="mx-auto w-1/2 mt-28 rounded overflow-hidden shadow-lg">
-      <div className="my-8 mt-32 text-white mx-auto w-1/2 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-        <div className="flex px-4 pt-4 flex-row justify-between">
-          <h5 className="mb-1 text-xl font-medium text-gray-900 dark:text-white">
-            {analytics?.totalResponses || 0} responses
-          </h5>
-          <div>
-            <button
-              onClick={() => setDropDown((p) => !p)}
-              className="inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-1.5"
-              type="button"
-            >
-              <span className="sr-only">Open dropdown</span>
-              <svg
-                className="w-5 h-5"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor"
-                viewBox="0 0 16 3"
-              >
-                <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+
+  // Show unpublished message if form is not published
+  if (analytics && analytics.isPublished === false) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-            </button>
-            <div
-              id="dropdown"
-              className={`z-10 ${
-                dropdown ? "" : "hidden"
-              } text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow  absolute  dark:bg-gray-700`}
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              {analytics.message || "Publish your form to see analytics"}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Your form "{analytics.formTitle || form?.formTitle}" needs to be published before you can view analytics and responses.
+            </p>
+            <button
+              onClick={() => navigate(`/create/${formId}`)}
+              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 dark:bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
-              <ul className="py-2">
-                <li>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
-                  >
-                    Download all responses (in csv)
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
-                  >
-                    Download all responses (in pdf)
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
-                  >
-                    Delete all responses
-                  </a>
-                </li>
-              </ul>
+              Go back to edit form
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+        {/* Header Section */}
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Form Analytics
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                {analytics?.totalResponses || 0} total responses
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              {/* Download Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setDropDown(!dropdown)}
+                  className="flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {dropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                    <div className="py-1">
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Download as CSV
+                      </a>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Download as PDF
+                      </a>
+                      <a
+                        href="#"
+                        className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          deleteAllResponses();
+                        }}
+                      >
+                        Delete all responses
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Accepting Responses Toggle */}
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={form?.acceptingResponses || false}
+                  onChange={toggleResponse}
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mr-3">
+                  Accepting responses
+                </span>
+                <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
             </div>
           </div>
         </div>
-        <div className="text-white px-4 pt-4 flex justify-end">
-          <label className="inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              className="sr-only peer" 
-              checked={form?.settings?.acceptingResponses || false}
-              onChange={toggleResponse}
-            />
-            <span className="me-3 text-sm font-medium text-gray-900 dark:text-gray-300">
-              Accepting responses
-            </span>
-            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-          </label>
+
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="flex space-x-8 px-6">
+            <button
+              onClick={() => setSelectOption("summary")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                selectOption === "summary"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
+            >
+              Summary
+            </button>
+            <button
+              onClick={() => setSelectOption("question")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                selectOption === "question"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
+            >
+              Question Analysis
+            </button>
+            <button
+              onClick={() => setSelectOption("individual")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                selectOption === "individual"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+              }`}
+            >
+              Individual Responses
+            </button>
+          </nav>
         </div>
 
-        <div className="w-full bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
-          <ul className="grid gap-4 md:grid-cols-3  w-full   px-10 text-sm font-medium text-center text-gray-500 border-b border-gray-200 rounded-t-lg bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:bg-gray-800">
-            <li
-              className={`me-2 w-auto rounded-ss-lg hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-                selectOption === "summary" ? "dark:text-blue-500" : "bg-white"
-              } `}
-              onClick={() => setSelectOption("summary")}
-            >
-              <button type="button" className="inline-block  w-auto p-4">
-                Summary
-              </button>
-            </li>
-            <li
-              className={`me-2 w-auto rounded-ss-lg hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-                selectOption === "question" ? "dark:text-blue-500" : "bg-white"
-              } `}
-              onClick={() => setSelectOption("question")}
-            >
-              <button
-                type="button"
-                className="inline-block p-4 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-              >
-                Question
-              </button>
-            </li>
-            <li
-              className={`me-2 w-auto rounded-ss-lg hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 ${
-                selectOption === "individual"
-                  ? "dark:text-blue-500"
-                  : "bg-white"
-              } `}
-              onClick={() => setSelectOption("individual")}
-            >
-              <button
-                type="button"
-                className="inline-block p-4 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-              >
-                Individual
-              </button>
-            </li>
-          </ul>
-          <div id="defaultTabContent">
-            <div
-              className={`${
-                selectOption === "summary" ? "" : "hidden"
-              } p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800`}
-              id="about"
-            >
+        {/* Tab Content */}
+        <div className="p-6">
+          {/* Summary Tab */}
+          {selectOption === "summary" && (
+            <div className="space-y-6">
               {analytics && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-blue-900">Total Responses</h3>
-                      <p className="text-2xl font-bold text-blue-600">{analytics.totalResponses}</p>
+                <>
+                  {/* Overview Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Total Responses</h3>
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{analytics.totalResponses}</p>
                     </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-green-900">Completion Rate</h3>
-                      <p className="text-2xl font-bold text-green-600">{analytics.completionRate}%</p>
+                    <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">Completion Rate</h3>
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{analytics.completionRate || 100}%</p>
                     </div>
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold text-purple-900">Average Score</h3>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {analytics.averageScore ? `${analytics.averageScore.toFixed(1)}%` : 'N/A'}
+                    <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Average Score</h3>
+                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
+                        {analytics.averageScore ? `${analytics.averageScore}%` : 'N/A'}
                       </p>
                     </div>
                   </div>
-                  
+
+                  {/* Quick Stats */}
                   {analytics.questionStats && analytics.questionStats.length > 0 && (
                     <div>
-                      <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Question Statistics</h3>
-                      <div className="space-y-4">
-                        {analytics.questionStats.map((stat, index) => (
-                          <div key={index} className="border border-gray-200 rounded-lg p-4">
-                            <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Question Overview</h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {analytics.questionStats.slice(0, 4).map((stat, index) => (
+                          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
                               {stat.question}
                             </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">
-                              Responses: {stat.responseCount} | 
-                              {stat.correctPercentage !== undefined && 
-                                ` Correct: ${stat.correctPercentage.toFixed(1)}%`}
-                            </p>
+                            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                              <span>Responses: {stat.responseCount}</span>
+                              <span>Rate: {stat.responseRate}%</span>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
+                </>
               )}
             </div>
-            <div
-              className={`${
-                selectOption === "question" ? "" : "hidden"
-              } p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800`}
-              id="services"
-            >
-              <h2 className="mb-5 text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          )}
+
+          {/* Question Analysis Tab */}
+          {selectOption === "question" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Question Analysis
               </h2>
               {analytics?.questionStats && analytics.questionStats.length > 0 ? (
                 <div className="space-y-6">
                   {analytics.questionStats.map((stat, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                        Question {index + 1}: {stat.question}
-                      </h3>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Total Responses</p>
-                          <p className="text-xl font-bold text-blue-600">{stat.responseCount}</p>
+                    <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          Question {index + 1}: {stat.question}
+                        </h3>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-300">
+                          <span>Type: {stat.type}</span>
+                          <span>•</span>
+                          <span>Responses: {stat.responseCount}</span>
+                          <span>•</span>
+                          <span>Response Rate: {stat.responseRate}%</span>
+                          {stat.skippedCount > 0 && (
+                            <>
+                              <span>•</span>
+                              <span>Skipped: {stat.skippedCount}</span>
+                            </>
+                          )}
                         </div>
-                        {stat.correctPercentage !== undefined && (
-                          <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-300">Correct Answers</p>
-                            <p className="text-xl font-bold text-green-600">{stat.correctPercentage.toFixed(1)}%</p>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Answer Distribution */}
                       {stat.answerDistribution && Object.keys(stat.answerDistribution).length > 0 && (
                         <div>
-                          <p className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Answer Distribution:</p>
+                          <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Answer Distribution:</h4>
                           <div className="space-y-2">
                             {Object.entries(stat.answerDistribution).map(([answer, count]) => (
-                              <div key={answer} className="flex justify-between items-center">
-                                <span className="text-sm text-gray-600 dark:text-gray-300">{answer}</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{count} responses</span>
+                              <div key={answer} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{answer}</span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{count}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    ({stat.answerPercentages && stat.answerPercentages[answer] ? stat.answerPercentages[answer] : '0'}%)
+                                  </span>
+                                </div>
                               </div>
                             ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Option Distribution for checkboxes */}
+                      {stat.optionDistribution && Object.keys(stat.optionDistribution).length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Option Distribution:</h4>
+                          <div className="space-y-2">
+                            {Object.entries(stat.optionDistribution).map(([option, count]) => (
+                              <div key={option} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">{count}</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    ({stat.optionPercentages && stat.optionPercentages[option] ? stat.optionPercentages[option] : '0'}%)
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Text Analytics */}
+                      {stat.textAnalytics && (
+                        <div>
+                          <h4 className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Text Analysis:</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                              <div className="text-lg font-bold text-gray-900 dark:text-white">{stat.textAnalytics.averageWordCount}</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Avg Words</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                              <div className="text-lg font-bold text-gray-900 dark:text-white">{stat.textAnalytics.minWordCount}</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Min Words</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                              <div className="text-lg font-bold text-gray-900 dark:text-white">{stat.textAnalytics.maxWordCount}</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Max Words</div>
+                            </div>
+                            <div className="text-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                              <div className="text-lg font-bold text-gray-900 dark:text-white">{stat.textAnalytics.totalWords}</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-400">Total Words</div>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -317,26 +436,35 @@ const Admin = () => {
                 <p className="text-gray-600 dark:text-gray-300">No question data available.</p>
               )}
             </div>
-            <div
-              className={`${
-                selectOption === "individual" ? "" : "hidden"
-              } p-4 bg-white rounded-lg md:p-8 dark:bg-gray-800`}
-            >
+          )}
+
+          {/* Individual Responses Tab */}
+          {selectOption === "individual" && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Individual Responses
+              </h2>
               {responses && responses.length > 0 ? (
                 <div className="space-y-4">
                   {responses.map((response, index) => (
                     <AdminIndividualCard 
                       key={response._id} 
                       s={response} 
-                      name={response.owner?.fullName || 'Anonymous'}
+                      name={response.respondentName || 'Anonymous'}
                     />
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600 dark:text-gray-300">No individual responses available.</p>
+                <div className="text-center py-8">
+                  <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-600 dark:text-gray-300">No responses available yet.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Share your form to start collecting responses.</p>
+                </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -185,7 +185,9 @@ export const endpoints = {
     toggleResponses: (id) => `/form/admin/${id}`,
     analytics: (id) => `/form/analytics/${id}`,
     responses: (id) => `/form/responses/${id}`,
+    deleteAllResponses: (id) => `/form/responses/${id}`,
     settings: (id) => `/form/settings/${id}`,
+    publish: (id) => `/form/publish/${id}`,
   },
 
   // Store endpoints

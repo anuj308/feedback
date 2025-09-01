@@ -35,6 +35,9 @@ const CreateForm = () => {
   });
   const [currentTab, setCurrentTab] = useState("create");
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const [settingsRefreshTrigger, setSettingsRefreshTrigger] = useState(0);
+  const [isPublished, setIsPublished] = useState(false);
+  const [acceptingResponses, setAcceptingResponses] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -155,6 +158,69 @@ const CreateForm = () => {
     setShowPublishModal(true);
   };
 
+  const handleToggleResponses = async () => {
+    try {
+      await api.patch(endpoints.forms.settings(fId), {
+        acceptingResponses: !acceptingResponses
+      });
+      
+      setAcceptingResponses(!acceptingResponses);
+      console.log(`✅ Accepting responses ${!acceptingResponses ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('❌ Error toggling responses:', error);
+    }
+  };
+
+  const handleSettingsUpdated = async () => {
+    // Refresh form data after settings are updated
+    try {
+      const response = await api.get(endpoints.forms.getById(fId));
+      const form = response.data.data.form;
+      
+      console.log("🔄 Refreshing form data after settings update");
+      
+      setHeadData({
+        formTitle: form.formTitle,
+        formDescription: form.formDescription,
+      });
+      
+      // Update publish status
+      setIsPublished(form.isPublished || false);
+      setAcceptingResponses(form.acceptingResponses || false);
+      
+      // Update form settings
+      if (form.settings) {
+        const settings = {
+          isQuiz: form.settings.isQuiz || false,
+          collectEmail: form.settings.collectEmail || false,
+          requireSignIn: form.settings.requireSignIn || false,
+          limitToOneResponse: form.settings.limitToOneResponse || false,
+          allowResponseEditing: form.settings.allowResponseEditing !== false,
+          showProgressBar: form.settings.showProgressBar || false,
+          shuffleQuestions: form.settings.shuffleQuestions || false,
+          confirmationMessage: form.settings.confirmationMessage || "Thank you for your response!",
+          showResultsSummary: form.settings.showResultsSummary || false,
+          disableAutoSave: form.settings.disableAutoSave || false,
+          autoSaveInterval: form.settings.autoSaveInterval || 2000,
+          allowedEmails: form.settings.allowedEmails || [],
+        };
+        
+        setFormSettings(settings);
+        
+        // Update auto-save specific settings for the hook
+        setAutoSaveSettings({
+          disableAutoSave: settings.disableAutoSave,
+          autoSaveInterval: settings.autoSaveInterval,
+        });
+      }
+      
+      // Trigger FormSettings refresh
+      setSettingsRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error("❌ Error refreshing form data:", error);
+    }
+  };
+
   const handleTabChange = (tab) => {
     setCurrentTab(tab);
   };
@@ -184,6 +250,10 @@ const CreateForm = () => {
           formTitle: form.formTitle,
           formDescription: form.formDescription,
         });
+        
+        // Set publish status
+        setIsPublished(form.isPublished || false);
+        setAcceptingResponses(form.acceptingResponses || false);
         
         // Load form settings
         if (form.settings) {
@@ -238,6 +308,9 @@ const CreateForm = () => {
         onPublish={handlePublish}
         currentTab={currentTab}
         onTabChange={handleTabChange}
+        isPublished={isPublished}
+        acceptingResponses={acceptingResponses}
+        onToggleResponses={handleToggleResponses}
       />
 
       {/* Main Content with top padding for fixed navbar */}
@@ -312,6 +385,7 @@ const CreateForm = () => {
               <FormSettings 
                 formId={fId}
                 onSettingsChange={handleAutoSaveSettingsChange}
+                refreshTrigger={settingsRefreshTrigger}
               />
             </div>
           </div>
@@ -324,6 +398,8 @@ const CreateForm = () => {
         onClose={() => setShowPublishModal(false)}
         formId={fId}
         formTitle={headData.formTitle || "Untitled Form"}
+        onSettingsUpdated={handleSettingsUpdated}
+        isPublished={isPublished}
       />
     </div>
   );

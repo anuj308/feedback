@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api, endpoints } from '../utils/api';
 
-const FormSettings = ({ formId, onSettingsChange }) => {
+const FormSettings = ({ formId, onSettingsChange, refreshTrigger }) => {
   const [settings, setSettings] = useState({
     // General settings
     isQuiz: false,
@@ -22,7 +22,6 @@ const FormSettings = ({ formId, onSettingsChange }) => {
     allowedEmails: [],
   });
   
-  const [acceptingResponses, setAcceptingResponses] = useState(true);
   const [loading, setLoading] = useState(false);
   const [emailInput, setEmailInput] = useState('');
 
@@ -52,30 +51,21 @@ const FormSettings = ({ formId, onSettingsChange }) => {
           });
         }
         
-        setAcceptingResponses(form.acceptingResponses !== false);
-        
       } catch (error) {
         console.error('Error fetching form settings:', error);
       }
     };
 
     fetchFormSettings();
-  }, [formId]);
+  }, [formId, refreshTrigger]);
 
-  const updateSettings = async (newSettings, newAcceptingResponses = null) => {
+  const updateSettings = async (newSettings) => {
     setLoading(true);
     try {
       const updateData = { settings: newSettings };
-      if (newAcceptingResponses !== null) {
-        updateData.acceptingResponses = newAcceptingResponses;
-      }
       
       await api.patch(endpoints.forms.settings(formId), updateData);
       setSettings(newSettings);
-      
-      if (newAcceptingResponses !== null) {
-        setAcceptingResponses(newAcceptingResponses);
-      }
       
       // Notify parent component about auto-save settings changes
       if (onSettingsChange) {
@@ -96,10 +86,6 @@ const FormSettings = ({ formId, onSettingsChange }) => {
   const handleSettingChange = (key, value) => {
     const newSettings = { ...settings, [key]: value };
     updateSettings(newSettings);
-  };
-
-  const handleAcceptingResponsesChange = (value) => {
-    updateSettings(settings, value);
   };
 
   const addAllowedEmail = () => {
@@ -142,18 +128,6 @@ const FormSettings = ({ formId, onSettingsChange }) => {
   return (
     <div className="space-y-6">
       
-      {/* Form Status */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Form Status</h3>
-        
-        <SettingToggle
-          label="Accepting Responses"
-          description="Allow new responses to be submitted to this form"
-          checked={acceptingResponses}
-          onChange={handleAcceptingResponsesChange}
-        />
-      </div>
-
       {/* General Settings */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">General Settings</h3>
