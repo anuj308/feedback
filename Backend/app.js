@@ -11,11 +11,16 @@ app.use(generalLimiter); // Apply general rate limiting to all routes
 app.use(
   cors({
     origin: process.env.NODE_ENV === 'production' 
-      ? [process.env.CORS_ORIGIN, `https://www.${process.env.CORS_ORIGIN?.replace('https://', '')}`]
-      : process.env.CORS_ORIGIN,
+      ? [
+          'https://feedback-red-seven.vercel.app',
+          process.env.CORS_ORIGIN,
+          `https://www.${process.env.CORS_ORIGIN?.replace('https://', '')}`
+        ].filter(Boolean)
+      : process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    optionsSuccessStatus: 200 // For legacy browser support
   })
 );
 
