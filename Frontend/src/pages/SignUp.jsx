@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useForms} from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
+import { GoogleSignInButton } from "../components/index";
 // import { ProfilePicture } from "../components";
 
 const SignUp = () => {
@@ -10,6 +11,16 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
+
+  const handleGoogleSuccess = (userData) => {
+    console.log("✅ Google sign-up successful");
+    navigate("/");
+  };
+
+  const handleGoogleError = (error) => {
+    console.error("❌ Google sign-up failed:", error);
+    setError("Google sign-up failed. Please try again.");
+  };
 
   const create = async (data) => {
     console.log("📝 Attempting registration with data:", { 
@@ -176,6 +187,21 @@ const SignUp = () => {
                 >
                   Create an account
                 </button>
+                
+                {/* Divider */}
+                <div className="flex items-center my-4">
+                  <hr className="flex-grow border-gray-300" />
+                  <span className="px-3 text-sm text-gray-500">Or continue with</span>
+                  <hr className="flex-grow border-gray-300" />
+                </div>
+                
+                {/* Google Sign-Up Button */}
+                <GoogleSignInButton 
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  text="Sign up with Google"
+                />
+                
                 <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                   Already have an account?{" "}
                   <Link

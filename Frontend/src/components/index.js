@@ -21,4 +21,6 @@ import UserProfileDropdown from './UserProfileDropdown'
 import HomeNavbar from './HomeNavbar'
 import Toast from './Toast'
 import AnalyticsSummaryCard from './AnalyticsSummaryCard'
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormSettings,FormBuilderNavbar,PublishModal,UserProfileDropdown,HomeNavbar,Toast,AnalyticsSummaryCard}
+import GoogleSignInButton from './GoogleSignInButton'
+
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormSettings,FormBuilderNavbar,PublishModal,UserProfileDropdown,HomeNavbar,Toast,AnalyticsSummaryCard,GoogleSignInButton}

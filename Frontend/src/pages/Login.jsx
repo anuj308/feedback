@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
-import { UserProfileDropdown } from "../components/index";
+import { UserProfileDropdown, GoogleSignInButton } from "../components/index";
 
 const Login = () => {
   const { isAuthenticated, setUser, setIsAuthenticated, setUserData, userData, isLoading, setIsLoading } = useForms();
@@ -12,6 +12,16 @@ const Login = () => {
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
   
+  const handleGoogleSuccess = (userData) => {
+    console.log("✅ Google sign-in successful");
+    navigate("/");
+  };
+
+  const handleGoogleError = (error) => {
+    console.error("❌ Google sign-in failed:", error);
+    setError("Google sign-in failed. Please try again.");
+  };
+
   const handleLogin = async (data) => {
     console.log("🔐 Attempting login with data:", data);
     setError("");
@@ -189,6 +199,21 @@ const Login = () => {
                     "Sign in"
                   )}
                 </button>
+                
+                {/* Divider */}
+                <div className="flex items-center my-4">
+                  <hr className="flex-grow border-gray-300" />
+                  <span className="px-3 text-sm text-gray-500">Or continue with</span>
+                  <hr className="flex-grow border-gray-300" />
+                </div>
+                
+                {/* Google Sign-In Button */}
+                <GoogleSignInButton 
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  text="Sign in with Google"
+                />
+                
                 <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                   Don’t have an account yet?{" "}
                   <Link

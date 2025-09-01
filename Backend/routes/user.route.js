@@ -9,16 +9,23 @@ import {
   updateAccountDetails,
   updateUserAvatar,
   updateUserSettings,
+  googleAuth,
+  getGoogleAuthUrl,
 } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
+import { authLimiter, googleAuthLimiter } from "../middleware/rateLimiter.middleware.js";
 import multer from "multer";
 
 const router = Router();
 
-router.route("/register").post(upload.single("avatar"), registerUser);
+router.route("/register").post(authLimiter, upload.single("avatar"), registerUser);
 
-router.route("/login").post(loginUser);
+router.route("/login").post(authLimiter, loginUser);
+
+// Google OAuth routes
+router.route("/google/auth-url").get(getGoogleAuthUrl);
+router.route("/google/auth").post(googleAuthLimiter, googleAuth);
 
 // secure routes
 router.route("/logout").post(verifyJWT, logoutUser);

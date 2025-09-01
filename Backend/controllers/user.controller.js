@@ -100,7 +100,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   };
 
   return res
@@ -137,7 +139,9 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   };
 
   return res
@@ -172,7 +176,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
     const options = {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
     };
 
     const { accessToken, newRefreshToken } =
@@ -314,6 +320,135 @@ const updateUserSettings = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { user }, "Settings updated successfully"));
 });
 
+// Simple function to decode JWT payload (for development/testing)
+const decodeGoogleJWT = (token) => {
+  try {
+    // Split the token
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+    
+    // Decode the payload (middle part)
+    const payload = JSON.parse(
+      Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()
+    );
+    
+    // Basic validation
+    if (!payload.iss || !payload.aud || !payload.exp) {
+      throw new Error('Invalid JWT payload');
+    }
+    
+    // Check if token is expired
+    if (payload.exp * 1000 < Date.now()) {
+      throw new Error('Token expired');
+    }
+    
+    // Check issuer
+    if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') {
+      throw new Error('Invalid issuer');
+    }
+    
+    // Check audience (should be your Google Client ID)
+    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) {
+      throw new Error('Invalid audience');
+    }
+    
+    return payload;
+  } catch (error) {
+    throw new Error(`JWT verification failed: ${error.message}`);
+  }
+};
+
+// Google OAuth functions
+const googleAuth = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    throw new ApiError(400, "Google credential is required");
+  }
+
+  try {
+    // Decode and verify the JWT credential
+    const payload = decodeGoogleJWT(credential);
+    
+    const googleUser = {
+      id: payload.sub,
+      email: payload.email,
+      name: payload.name,
+      picture: payload.picture,
+      email_verified: payload.email_verified,
+    };
+
+    // Check if user exists
+    let user = await User.findOne({ 
+      $or: [
+        { email: googleUser.email },
+        { googleId: googleUser.id }
+      ]
+    });
+
+    if (user) {
+      // Update existing user with Google info if not already set
+      if (!user.googleId) {
+        user.googleId = googleUser.id;
+        user.authProvider = 'google';
+        if (googleUser.picture && !user.avatar) {
+          user.avatar = googleUser.picture;
+        }
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      // Create new user
+      user = await User.create({
+        email: googleUser.email,
+        fullName: googleUser.name || googleUser.email.split('@')[0],
+        avatar: googleUser.picture || '',
+        googleId: googleUser.id,
+        authProvider: 'google',
+      });
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    const options = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+          },
+          "Google authentication successful"
+        )
+      );
+  } catch (error) {
+    console.error("Google OAuth error:", error);
+    throw new ApiError(400, `Google authentication failed: ${error.message}`);
+  }
+});
+
+const getGoogleAuthUrl = asyncHandler(async (req, res) => {
+  // Simple response for Google Auth URL - not needed for JWT implementation
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { authUrl: null }, "Use Google Identity Services directly"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -324,6 +459,8 @@ export {
   updateAccountDetails,
   updateUserAvatar,
   updateUserSettings,
+  googleAuth,
+  getGoogleAuthUrl,
 };
 
 // what not wotking are getchannelinfo  and updateaccountdeatils

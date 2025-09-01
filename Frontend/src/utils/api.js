@@ -163,6 +163,8 @@ export const endpoints = {
     logout: '/user/logout',
     refreshToken: '/user/refresh-token',
     currentUser: '/user/current-user',
+    googleAuth: '/user/google/auth',
+    googleAuthUrl: '/user/google/auth-url',
   },
 
   // User endpoints
