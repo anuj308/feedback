@@ -13,15 +13,33 @@ const FormCard = ({
   currentAnswer,
 }) => {
   const [answer, setAnswer] = useState(currentAnswer || "");
-  const [selectedOptions, setSelectedOptions] = useState(
-    type === "checkbox" && currentAnswer ? JSON.parse(currentAnswer) : []
-  );
+  const [selectedOptions, setSelectedOptions] = useState(() => {
+    if (type === "checkbox" && currentAnswer) {
+      try {
+        return Array.isArray(currentAnswer) ? currentAnswer : JSON.parse(currentAnswer);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  // Debug logging
+  useEffect(() => {
+    console.log(`🎯 FormCard rendered for question ${questionId}:`, {
+      type,
+      questionText,
+      currentAnswer,
+      options: options?.length || 0
+    });
+  }, [questionId, type, questionText, currentAnswer, options]);
 
   useEffect(() => {
     setAnswer(currentAnswer || "");
     if (type === "checkbox" && currentAnswer) {
       try {
-        setSelectedOptions(JSON.parse(currentAnswer));
+        const parsed = Array.isArray(currentAnswer) ? currentAnswer : JSON.parse(currentAnswer);
+        setSelectedOptions(parsed);
       } catch {
         setSelectedOptions([]);
       }
@@ -68,15 +86,24 @@ const FormCard = ({
       </div>
 
       <div className="px-6 pt-4 pb-6">
-        {type === "short-answer" && (
-          <Input
-            type="text"
-            placeholder="Your answer"
-            name="answer"
-            onChange={onChangeHandler}
-            value={answer}
-            required={required}
-          />
+        {/* Debug info - remove this after fixing */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-2 p-2 bg-yellow-100 text-xs text-gray-600 rounded">
+            Debug: type="{type}", questionId="{questionId}"
+          </div>
+        )}
+        
+        {type === "shortAnswer" && (
+          <div>
+            <Input
+              type="text"
+              placeholder="Your answer"
+              name="answer"
+              onChange={onChangeHandler}
+              value={answer}
+              required={required}
+            />
+          </div>
         )}
         
         {type === "paragraph" && (
@@ -90,7 +117,7 @@ const FormCard = ({
           />
         )}
         
-        {type === "multiple-choice" && (
+        {type === "multipleChoice" && (
           <div className="space-y-2">
             {options.map((option, index) => (
               <div key={index} className="flex items-center">
@@ -148,7 +175,7 @@ const FormCard = ({
           </select>
         )}
         
-        {type === "file-upload" && (
+        {type === "fileUpload" && (
           <input
             type="file"
             onChange={(e) => {
@@ -161,6 +188,21 @@ const FormCard = ({
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required={required}
           />
+        )}
+        
+        {/* Fallback for any unmatched types - show as text input */}
+        {!["shortAnswer", "paragraph", "multipleChoice", "checkbox", "dropdown", "fileUpload"].includes(type) && (
+          <div className="border border-red-300 p-3 rounded bg-red-50">
+            <p className="text-red-600 text-sm mb-2">Unknown question type: "{type}"</p>
+            <Input
+              type="text"
+              placeholder="Your answer"
+              name="answer"
+              onChange={onChangeHandler}
+              value={answer}
+              required={required}
+            />
+          </div>
         )}
       </div>
     </div>

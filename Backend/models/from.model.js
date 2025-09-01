@@ -8,7 +8,7 @@ const questionSchema = new Schema({
   },
   type: {
     type: String,
-    enum: ["shortAnswer", "paragraph", "multipleChoice", "checkboxes", "dropdown", "fileUpload", "linearScale", "multipleChoiceGrid"],
+    enum: ["shortAnswer", "paragraph", "multipleChoice", "checkbox", "dropdown", "fileUpload", "linearScale", "multipleChoiceGrid"],
     required: true,
     default: "shortAnswer"
   },

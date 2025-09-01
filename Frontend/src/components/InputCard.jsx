@@ -17,18 +17,18 @@ const InputCard = ({
   const [questionData, setQuestionData] = useState({
     question: questionText || "",
     description: description || "",
-    type: type || "short-answer",
+    type: type || "shortAnswer",
     required: required,
     options: options,
   });
 
   const questionTypes = [
-    { option: "Short answer", optionValue: "short-answer" },
+    { option: "Short answer", optionValue: "shortAnswer" },
     { option: "Paragraph", optionValue: "paragraph" },
-    { option: "Multiple choice", optionValue: "multiple-choice" },
+    { option: "Multiple choice", optionValue: "multipleChoice" },
     { option: "Checkboxes", optionValue: "checkbox" },
     { option: "Dropdown", optionValue: "dropdown" },
-    { option: "File upload", optionValue: "file-upload" },
+    { option: "File upload", optionValue: "fileUpload" },
   ];
 
   useEffect(() => {
@@ -76,7 +76,7 @@ const InputCard = ({
     }));
   };
 
-  const needsOptions = ["multiple-choice", "checkbox", "dropdown"].includes(questionData.type);
+  const needsOptions = ["multipleChoice", "checkbox", "dropdown"].includes(questionData.type);
 
   return (
     <div className="mx-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl m-3 shadow-sm">
@@ -151,7 +151,7 @@ const InputCard = ({
               {questionData.options.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <span className="text-gray-400 dark:text-gray-500 text-sm">
-                    {questionData.type === "multiple-choice" ? "○" : "☐"}
+                    {questionData.type === "multipleChoice" ? "○" : "☐"}
                   </span>
                   <input
                     type="text"
@@ -173,7 +173,7 @@ const InputCard = ({
           </div>
         )}
 
-        {questionData.type === "short-answer" && (
+        {questionData.type === "shortAnswer" && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <input
               type="text"
@@ -195,7 +195,7 @@ const InputCard = ({
           </div>
         )}
 
-        {questionData.type === "file-upload" && (
+        {questionData.type === "fileUpload" && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
             <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center text-gray-500 dark:text-gray-400">
               Click to upload or drag and drop

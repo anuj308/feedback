@@ -20,4 +20,5 @@ import PublishModal from './PublishModal'
 import UserProfileDropdown from './UserProfileDropdown'
 import HomeNavbar from './HomeNavbar'
 import Toast from './Toast'
-export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormSettings,FormBuilderNavbar,PublishModal,UserProfileDropdown,HomeNavbar,Toast}
+import AnalyticsSummaryCard from './AnalyticsSummaryCard'
+export {Input,InputCard,DropDown,Button,Select,FormHead,HomeCard,MultipeChoice,CheckBox,RenameCard,FormCard,AdminIndividualCard,DataAdminCard,SaveStatusIndicator,AutoSaveSettings,FormSettings,FormBuilderNavbar,PublishModal,UserProfileDropdown,HomeNavbar,Toast,AnalyticsSummaryCard}

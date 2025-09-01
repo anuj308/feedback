@@ -18,11 +18,15 @@ const DataAdminCard = ({
   const renderAnswer = () => {
     const answer = card.data.answer;
     
-    if (!answer) {
+    if (!answer || answer === '' || answer === null || answer === undefined) {
       return <span className="text-gray-400 italic">No answer provided</span>;
     }
     
+    // Handle array answers (checkboxes)
     if (Array.isArray(answer)) {
+      if (answer.length === 0) {
+        return <span className="text-gray-400 italic">No answer provided</span>;
+      }
       return (
         <div className="space-y-1">
           {answer.map((item, index) => (
@@ -32,6 +36,29 @@ const DataAdminCard = ({
           ))}
         </div>
       );
+    }
+    
+    // Handle string answers that might be JSON
+    if (typeof answer === 'string') {
+      try {
+        const parsed = JSON.parse(answer);
+        if (Array.isArray(parsed)) {
+          if (parsed.length === 0) {
+            return <span className="text-gray-400 italic">No answer provided</span>;
+          }
+          return (
+            <div className="space-y-1">
+              {parsed.map((item, index) => (
+                <span key={index} className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded mr-1 mb-1">
+                  {item}
+                </span>
+              ))}
+            </div>
+          );
+        }
+      } catch {
+        // Not JSON, treat as regular string
+      }
     }
     
     return <span className="text-gray-900 dark:text-white">{answer}</span>;

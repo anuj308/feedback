@@ -230,13 +230,19 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
     };
 
     // Add specific analytics based on question type
-    if (question.type === 'multiple-choice' || question.type === 'dropdown') {
+    if (question.type === 'multipleChoice' || question.type === 'dropdown') {
       const answerCounts = {};
       questionResponses.forEach(response => {
         const answer = response.answer;
         answerCounts[answer] = (answerCounts[answer] || 0) + 1;
       });
       questionAnalytics.answerDistribution = answerCounts;
+      
+      // Create option breakdown for charts
+      questionAnalytics.optionBreakdown = Object.keys(answerCounts).map(option => ({
+        option: option,
+        count: answerCounts[option]
+      }));
       
       // Calculate percentages
       questionAnalytics.answerPercentages = {};
@@ -246,7 +252,7 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
       });
     }
 
-    if (question.type === 'checkboxes') {
+    if (question.type === 'checkbox') {
       const optionCounts = {};
       questionResponses.forEach(response => {
         const answer = response.answer;
@@ -254,9 +260,31 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
           answer.forEach(option => {
             optionCounts[option] = (optionCounts[option] || 0) + 1;
           });
+        } else if (typeof answer === 'string' && answer.startsWith('[')) {
+          // Handle stringified arrays
+          try {
+            const parsed = JSON.parse(answer);
+            if (Array.isArray(parsed)) {
+              parsed.forEach(option => {
+                optionCounts[option] = (optionCounts[option] || 0) + 1;
+              });
+            }
+          } catch (e) {
+            // Handle as single option
+            optionCounts[answer] = (optionCounts[answer] || 0) + 1;
+          }
+        } else if (answer) {
+          // Handle single option
+          optionCounts[answer] = (optionCounts[answer] || 0) + 1;
         }
       });
       questionAnalytics.optionDistribution = optionCounts;
+      
+      // Create option breakdown for charts
+      questionAnalytics.optionBreakdown = Object.keys(optionCounts).map(option => ({
+        option: option,
+        count: optionCounts[option]
+      }));
       
       // Calculate percentages for checkboxes
       questionAnalytics.optionPercentages = {};
@@ -266,7 +294,7 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
       });
     }
 
-    if (question.type === 'short-answer' || question.type === 'paragraph') {
+    if (question.type === 'shortAnswer' || question.type === 'paragraph') {
       // For text responses, provide word count analysis
       const wordCounts = questionResponses.map(response => {
         const answer = response.answer || '';
@@ -306,6 +334,9 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
     }
   }
 
+  // Also add questionAnalytics for frontend compatibility
+  analytics.questionAnalytics = analytics.questionStats;
+
   res.status(200).json(new ApiResponse(200, analytics, "Form analytics retrieved successfully"));
 });
 
@@ -337,8 +368,12 @@ const getFormResponses = asyncHandler(async (req, res) => {
     const enhancedAnswers = response.answers ? response.answers.map(answer => {
       // Find the corresponding question
       const question = form.questions.find(q => q.questionId === answer.questionId);
+      
+      // Convert Mongoose document to plain object if needed
+      const answerObj = answer.toObject ? answer.toObject() : answer;
+      
       return {
-        ...answer,
+        ...answerObj,
         question: question ? question.question : `Question ${answer.questionId}`,
         questionType: question ? question.type : 'unknown'
       };

@@ -240,7 +240,7 @@ const generateQuestionSummary = (responses, questionType) => {
       });
       return { distribution: counts };
 
-    case 'checkboxes':
+    case 'checkbox':
       const optionCounts = {};
       responses.forEach(response => {
         const answer = response.answer;

@@ -6,7 +6,7 @@ import { api, endpoints } from "../utils/api";
 import { UserProfileDropdown } from "../components/index";
 
 const Login = () => {
-  const { isAuthenticated, setUser, setIsAuthenticated, setUserData, isLoading, setIsLoading } = useForms();
+  const { isAuthenticated, setUser, setIsAuthenticated, setUserData, userData, isLoading, setIsLoading } = useForms();
   const [error, setError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const { register, handleSubmit } = useForm();

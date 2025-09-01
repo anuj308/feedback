@@ -1,7 +1,7 @@
 import { api, endpoints } from "../utils/api";
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { AdminIndividualCard, DataAdminCard } from "../components";
+import { AdminIndividualCard, DataAdminCard, AnalyticsSummaryCard } from "../components";
 import { useForms } from "../Context/StoreContext";
 
 const Admin = () => {
@@ -37,13 +37,11 @@ const Admin = () => {
   }, [isAuthenticated]);
 
   const toggleResponse = async () => {
-    console.log("🔄 Toggling form responses for formId:", formId);
     try {
       // Use the settings endpoint to update accepting responses
       const response = await api.patch(endpoints.forms.settings(formId), {
         acceptingResponses: !form?.acceptingResponses
       });
-      console.log("✅ Form response setting updated successfully");
       // Update local state immediately for better UX
       setForm(prev => ({
         ...prev,
@@ -67,10 +65,8 @@ const Admin = () => {
       return;
     }
     
-    console.log("🗑️ Deleting all responses for formId:", formId);
     try {
       const response = await api.delete(endpoints.forms.deleteAllResponses(formId));
-      console.log("✅ All responses deleted successfully");
       // Refresh data after deletion
       await Promise.all([
         fetchAnalytics(),
@@ -84,10 +80,8 @@ const Admin = () => {
   };
 
   const fetchFormData = async () => {
-    console.log("📖 Fetching form data for formId:", formId);
     try {
       const formResponse = await api.get(endpoints.forms.getById(formId));
-      console.log("📄 Form data loaded:", formResponse.data.data.form.formTitle);
       setForm(formResponse.data.data.form);
     } catch (error) {
       console.error("❌ Error fetching form:", error);
@@ -95,10 +89,8 @@ const Admin = () => {
   };
 
   const fetchAnalytics = async () => {
-    console.log("📊 Fetching analytics for formId:", formId);
     try {
       const analyticsResponse = await api.get(endpoints.forms.analytics(formId));
-      console.log("📈 Analytics loaded:", analyticsResponse.data.data);
       setAnalytics(analyticsResponse.data.data);
     } catch (error) {
       console.error("❌ Error fetching analytics:", error);
@@ -106,10 +98,8 @@ const Admin = () => {
   };
 
   const fetchResponses = async () => {
-    console.log("📋 Fetching responses for formId:", formId);
     try {
       const responsesResponse = await api.get(endpoints.forms.responses(formId));
-      console.log("📝 Responses loaded:", responsesResponse.data.data.responses.length, "responses");
       setResponses(responsesResponse.data.data.responses || []);
     } catch (error) {
       console.error("❌ Error fetching responses:", error);
@@ -292,47 +282,7 @@ const Admin = () => {
           {/* Summary Tab */}
           {selectOption === "summary" && (
             <div className="space-y-6">
-              {analytics && (
-                <>
-                  {/* Overview Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg">
-                      <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100">Total Responses</h3>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{analytics.totalResponses}</p>
-                    </div>
-                    <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg">
-                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">Completion Rate</h3>
-                      <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{analytics.completionRate || 100}%</p>
-                    </div>
-                    <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg">
-                      <h3 className="text-lg font-semibold text-purple-900 dark:text-purple-100">Average Score</h3>
-                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
-                        {analytics.averageScore ? `${analytics.averageScore}%` : 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats */}
-                  {analytics.questionStats && analytics.questionStats.length > 0 && (
-                    <div>
-                      <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Question Overview</h3>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {analytics.questionStats.slice(0, 4).map((stat, index) => (
-                          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                            <h4 className="font-medium text-gray-900 dark:text-white mb-2 truncate">
-                              {stat.question}
-                            </h4>
-                            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
-                              <span>Responses: {stat.responseCount}</span>
-                              <span>Rate: {stat.responseRate}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+              <AnalyticsSummaryCard analytics={analytics} responses={responses} />
             </div>
           )}
 
@@ -451,6 +401,7 @@ const Admin = () => {
                       key={response._id} 
                       s={response} 
                       name={response.respondentName || 'Anonymous'}
+                      form={form}
                     />
                   ))}
                 </div>
