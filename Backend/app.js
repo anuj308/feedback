@@ -28,7 +28,7 @@ console.log(process.env.CORS_ORIGIN)
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("uploads"));
-app.use(cookieParser());
+app.use(cookieParser(process.env.SESSION_SECRET || 'fallback-cookie-secret'));
 
 // Request logging middleware for debugging
 app.use((req, res, next) => {

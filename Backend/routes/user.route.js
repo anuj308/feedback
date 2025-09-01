@@ -11,6 +11,8 @@ import {
   updateUserSettings,
   googleAuth,
   getGoogleAuthUrl,
+  initiateGoogleAuth,
+  handleGoogleCallback,
 } from "../controllers/user.controller.js";
 import { upload } from "../middleware/multer.middleware.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
@@ -23,7 +25,11 @@ router.route("/register").post(authLimiter, upload.single("avatar"), registerUse
 
 router.route("/login").post(authLimiter, loginUser);
 
-// Google OAuth routes
+// Google OAuth routes - Server-side flow
+router.route("/auth/google").get(initiateGoogleAuth);
+router.route("/auth/google/callback").get(handleGoogleCallback);
+
+// Legacy routes (keep for backward compatibility)
 router.route("/google/auth-url").get(getGoogleAuthUrl);
 router.route("/google/auth").post(googleAuthLimiter, googleAuth);
 

@@ -69,6 +69,22 @@ function App() {
   useEffect(() => {
     if (!authCheckRef.current) {
       authCheckRef.current = true;
+      
+      // Check for OAuth return
+      const urlParams = new URLSearchParams(window.location.search);
+      const authStatus = urlParams.get('auth');
+      const authError = urlParams.get('error');
+      
+      if (authStatus === 'success') {
+        console.log('✅ OAuth authentication successful');
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (authError) {
+        console.log('❌ OAuth authentication failed:', authError);
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      
       checkAuthStatus();
     }
   }, []);
@@ -133,6 +149,10 @@ function App() {
     } catch (error) {
       console.error("❌ Logout API error:", error);
     } finally {
+      // Clear stored tokens
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
       // Always clear data regardless of API success/failure
       handleAuthFailure();
     }

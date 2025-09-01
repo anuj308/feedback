@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/fileUpload.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
+import crypto from "crypto";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -403,8 +404,7 @@ const googleAuth = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
     };
 
     return res
@@ -435,6 +435,140 @@ const getGoogleAuthUrl = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { authUrl: null }, "Use Google Identity Services directly"));
 });
 
+// ========================================
+// SECURE SERVER-SIDE OAUTH FLOW
+// ========================================
+
+// Initialize Google OAuth2 client
+const oauth2Client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  `${process.env.BACKEND_URL || 'http://localhost:9000'}/api/v1/user/auth/google/callback`
+);
+
+// Step 1: Initiate Google OAuth (redirect user to Google)
+const initiateGoogleAuth = asyncHandler(async (req, res) => {
+  // Generate state parameter for CSRF protection
+  const state = crypto.randomBytes(32).toString('hex');
+  
+  // For simplicity, we'll store state in a signed cookie instead of session
+  // In production, consider using Redis or database for better scalability
+  res.cookie('oauth_state', state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 10 * 60 * 1000, // 10 minutes
+    signed: true
+  });
+  
+  // Generate the authorization URL
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ],
+    state: state,
+    prompt: 'consent'
+  });
+
+  console.log('🔗 Redirecting to Google OAuth URL');
+  
+  // Redirect user to Google
+  res.redirect(authUrl);
+});
+
+// Step 2: Handle Google OAuth callback
+const handleGoogleCallback = asyncHandler(async (req, res) => {
+  const { code, state, error } = req.query;
+  
+  // Check for OAuth errors
+  if (error) {
+    console.error('❌ Google OAuth error:', error);
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=oauth_error`);
+  }
+  
+  // Verify state parameter for CSRF protection
+  const storedState = req.signedCookies.oauth_state;
+  if (!state || state !== storedState) {
+    console.error('❌ Invalid state parameter');
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=invalid_state`);
+  }
+  
+  // Clear the state cookie
+  res.clearCookie('oauth_state');
+  
+  try {
+    // Exchange authorization code for tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+    
+    // Get user info from Google
+    const userInfoResponse = await fetch(
+      `https://www.googleapis.com/oauth2/v2/userinfo?access_token=${tokens.access_token}`
+    );
+    const googleUser = await userInfoResponse.json();
+    
+    if (!googleUser.email) {
+      throw new Error('Unable to get user email from Google');
+    }
+    
+    console.log('✅ Google user data received:', { email: googleUser.email, name: googleUser.name });
+    
+    // Check if user exists in database
+    let user = await User.findOne({ 
+      $or: [
+        { email: googleUser.email },
+        { googleId: googleUser.id }
+      ]
+    });
+
+    if (user) {
+      // Update existing user with Google info if not already set
+      if (!user.googleId) {
+        user.googleId = googleUser.id;
+        user.authProvider = 'google';
+        if (googleUser.picture && !user.avatar) {
+          user.avatar = googleUser.picture;
+        }
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      // Create new user
+      user = await User.create({
+        email: googleUser.email,
+        fullName: googleUser.name || googleUser.email.split('@')[0],
+        avatar: googleUser.picture || '',
+        googleId: googleUser.id,
+        authProvider: 'google',
+      });
+    }
+
+    // Generate JWT tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+
+    // Set secure cookies
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    };
+
+    res.cookie('accessToken', accessToken, cookieOptions);
+    res.cookie('refreshToken', refreshToken, cookieOptions);
+
+    console.log('✅ User authenticated successfully, redirecting to frontend');
+    
+    // Redirect to frontend with success
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/?auth=success`);
+    
+  } catch (error) {
+    console.error('❌ Google OAuth callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/login?error=auth_failed`);
+  }
+});
+
 export {
   registerUser,
   loginUser,
@@ -447,6 +581,8 @@ export {
   updateUserSettings,
   googleAuth,
   getGoogleAuthUrl,
+  initiateGoogleAuth,
+  handleGoogleCallback,
 };
 
 // what not wotking are getchannelinfo  and updateaccountdeatils
