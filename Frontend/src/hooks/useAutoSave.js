@@ -83,6 +83,24 @@ export const useAutoSave = (saveFunction, data, options = {}) => {
     await debouncedSave();
   }, [debouncedSave]);
 
+  // Force immediate save (for navigation events)
+  const forceSave = useCallback(async () => {
+    if (!enabled || !hasChangesRef.current) return;
+    
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    try {
+      await saveFunction(data);
+      hasChangesRef.current = false;
+      console.log("✅ Force save successful");
+    } catch (error) {
+      console.error("❌ Force save failed:", error);
+      throw error;
+    }
+  }, [saveFunction, data, enabled]);
+
   // Force save on component unmount
   useEffect(() => {
     return () => {
@@ -100,6 +118,7 @@ export const useAutoSave = (saveFunction, data, options = {}) => {
     isSaving: isSavingRef.current,
     hasUnsavedChanges: hasChangesRef.current,
     manualSave,
+    forceSave,
   };
 };
 

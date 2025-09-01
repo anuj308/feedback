@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useContext, useCallback } from "react";
-import { FormHead, InputCard, FormSettings, FormBuilderNavbar, PublishModal } from "../components/index";
+import { FormHead, InputCard, FormSettings, FormBuilderNavbar, PublishModal, Toast } from "../components/index";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate, useParams, useLoaderData } from "react-router-dom";
 import { api, endpoints } from "../utils/api";
 import Admin from "./Admin";
 import useAutoSave from "../hooks/useAutoSave";
+import useToast from "../hooks/useToast";
 
 const CreateForm = () => {
   const navigate = useNavigate();
@@ -38,6 +39,9 @@ const CreateForm = () => {
   const [settingsRefreshTrigger, setSettingsRefreshTrigger] = useState(0);
   const [isPublished, setIsPublished] = useState(false);
   const [acceptingResponses, setAcceptingResponses] = useState(false);
+
+  // Toast notifications
+  const toast = useToast();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -90,21 +94,57 @@ const CreateForm = () => {
   };
 
   // Setup auto-save hook
-  const { isSaving, hasUnsavedChanges, manualSave } = useAutoSave(
+  const { isSaving, hasUnsavedChanges, manualSave, forceSave } = useAutoSave(
     autoSaveForm,
     { headData, questions },
     {
       delay: autoSaveSettings.autoSaveInterval, // Use settings interval
       enabled: !!fId && !autoSaveSettings.disableAutoSave, // Use settings enabled flag
-      onSaveStart: () => setSaveError(null),
-      onSaveSuccess: () => setLastSavedTime(new Date().toISOString()),
+      onSaveStart: () => {
+        setSaveError(null);
+        // Optional: Show subtle saving indicator for manual saves
+      },
+      onSaveSuccess: () => {
+        setLastSavedTime(new Date().toISOString());
+        // Optional: Show brief success toast for manual saves only
+      },
       onSaveError: (error) => {
         console.error("❌ Auto-save failed:", error);
         setSaveError(error.message || "Auto-save failed");
+        toast.showErrorToast("Auto-save failed. Please try saving manually.");
       },
     }
   );
 
+  // Handle browser beforeunload event for auto-save on navigation/close
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (hasUnsavedChanges && !autoSaveSettings.disableAutoSave) {
+        // Try to auto-save synchronously (limited by browser constraints)
+        if (forceSave) {
+          // Use sendBeacon for reliable background save attempt
+          try {
+            navigator.sendBeacon && forceSave().catch(() => {
+              console.log("Background save attempt failed during page unload");
+            });
+          } catch (error) {
+            console.log("Could not attempt background save during page unload");
+          }
+        }
+        
+        // Show browser's default confirmation dialog
+        event.preventDefault();
+        event.returnValue = 'You have unsaved changes that will be lost.';
+        return 'You have unsaved changes that will be lost.';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges, forceSave, autoSaveSettings.disableAutoSave]);
 
   const addQuestion = useCallback((info) => {
     const newQuestion = { ...createNewQuestion(), ...info };
@@ -150,8 +190,28 @@ const CreateForm = () => {
 
   const handleSave = async () => {
     if (manualSave) {
-      await manualSave();
+      const toastId = toast.showSavingToast("Saving form...");
+      try {
+        await manualSave();
+        toast.hideToast(toastId);
+        toast.showSuccessToast("Form saved successfully!");
+      } catch (error) {
+        toast.hideToast(toastId);
+        toast.showErrorToast("Failed to save form");
+      }
     }
+  };
+
+  const handleForceSave = async () => {
+    if (forceSave) {
+      try {
+        await forceSave();
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+    return false;
   };
 
   const handlePublish = () => {
@@ -305,12 +365,14 @@ const CreateForm = () => {
         isSaving={isSaving}
         hasUnsavedChanges={hasUnsavedChanges}
         onSave={handleSave}
+        onForceSave={handleForceSave}
         onPublish={handlePublish}
         currentTab={currentTab}
         onTabChange={handleTabChange}
         isPublished={isPublished}
         acceptingResponses={acceptingResponses}
         onToggleResponses={handleToggleResponses}
+        onShowToast={toast}
       />
 
       {/* Main Content with top padding for fixed navbar */}
@@ -401,6 +463,18 @@ const CreateForm = () => {
         onSettingsUpdated={handleSettingsUpdated}
         isPublished={isPublished}
       />
+
+      {/* Toast Notifications */}
+      {toast.toasts.map((toastItem) => (
+        <Toast
+          key={toastItem.id}
+          message={toastItem.message}
+          type={toastItem.type}
+          isVisible={toastItem.isVisible}
+          onClose={() => toast.hideToast(toastItem.id)}
+          duration={toastItem.duration}
+        />
+      ))}
     </div>
   );
 };

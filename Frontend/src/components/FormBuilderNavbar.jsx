@@ -8,14 +8,18 @@ const FormBuilderNavbar = ({
   isSaving = false, 
   hasUnsavedChanges = false,
   onSave,
+  onForceSave, // New prop for immediate saving
   onPublish,
   currentTab = "create",
   onTabChange,
   isPublished = false,
+  // Toast notification props
+  onShowToast,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, userData } = useForms();
   const dropdownRef = useRef(null);
+  const [showPublishedMenu, setShowPublishedMenu] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -30,10 +34,74 @@ const FormBuilderNavbar = ({
     };
   }, []);
 
-  const handleBackToHome = () => {
+  const handleTabChange = async (newTab) => {
+    if (hasUnsavedChanges && newTab !== currentTab) {
+      // Show saving toast
+      const toastId = onShowToast?.showSavingToast?.("Saving changes before switching tabs...");
+      
+      try {
+        // Auto-save before switching tabs
+        const saveFunction = onForceSave || onSave;
+        if (saveFunction) {
+          await saveFunction();
+          console.log(`✅ Auto-saved before switching to ${newTab} tab`);
+          
+          // Hide saving toast and show success
+          if (toastId) onShowToast?.hideToast?.(toastId);
+          onShowToast?.showSuccessToast?.("Changes saved!");
+        }
+      } catch (error) {
+        console.error("❌ Auto-save failed before tab switch:", error);
+        // Hide saving toast and show error
+        if (toastId) onShowToast?.hideToast?.(toastId);
+        onShowToast?.showErrorToast?.("Failed to save changes");
+        // Continue with tab switch even if save fails
+      }
+    }
+    
+    // Proceed with tab change
+    onTabChange?.(newTab);
+  };
+
+  const handleBackToHome = async () => {
     if (hasUnsavedChanges) {
-      if (window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
-        navigate('/');
+      // Show saving toast immediately
+      const toastId = onShowToast?.showSavingToast?.("Saving changes before leaving...");
+      
+      try {
+        // Try force save first for faster response, fallback to regular save
+        const saveFunction = onForceSave || onSave;
+        if (saveFunction) {
+          await saveFunction();
+          console.log("✅ Auto-saved before navigation");
+          
+          // Hide saving toast and show success briefly before navigating
+          if (toastId) onShowToast?.hideToast?.(toastId);
+          onShowToast?.showSuccessToast?.("Changes saved!");
+          
+          // Small delay to show success message
+          setTimeout(() => {
+            navigate('/');
+          }, 800);
+        } else {
+          // No save function available, just navigate
+          if (toastId) onShowToast?.hideToast?.(toastId);
+          navigate('/');
+        }
+      } catch (error) {
+        console.error("❌ Auto-save failed before navigation:", error);
+        
+        // Hide saving toast and show error
+        if (toastId) onShowToast?.hideToast?.(toastId);
+        onShowToast?.showErrorToast?.("Failed to save changes. You may lose unsaved work.");
+        
+        // Ask user what to do with a simple confirm
+        const forceLeave = window.confirm(
+          "Auto-save failed. Do you want to leave anyway and lose your changes?"
+        );
+        if (forceLeave) {
+          navigate('/');
+        }
       }
     } else {
       navigate('/');
@@ -91,7 +159,7 @@ const FormBuilderNavbar = ({
           {/* Center section - Tab navigation */}
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
             <button
-              onClick={() => onTabChange?.('create')}
+              onClick={() => handleTabChange('create')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'create' 
                   ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
@@ -106,7 +174,7 @@ const FormBuilderNavbar = ({
               </div>
             </button>
             <button
-              onClick={() => onTabChange?.('responses')}
+              onClick={() => handleTabChange('responses')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'responses' 
                   ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
@@ -121,7 +189,7 @@ const FormBuilderNavbar = ({
               </div>
             </button>
             <button
-              onClick={() => onTabChange?.('settings')}
+              onClick={() => handleTabChange('settings')}
               className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                 currentTab === 'settings' 
                   ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm' 
