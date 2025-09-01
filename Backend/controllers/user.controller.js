@@ -7,6 +7,23 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import crypto from "crypto";
 
+// Helper function for consistent cookie options
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  maxAge: 24 * 60 * 60 * 1000, // 1 day
+  path: '/', // Ensure path is consistent
+});
+
+// Helper function for clearing cookies (without maxAge)
+const getClearCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  path: '/', // Ensure path matches
+});
+
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -65,9 +82,19 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "something went wrong while registering user");
   }
 
+  // Generate tokens and set cookies for auto-login after registration
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
+  const options = getCookieOptions();
+
   return res
     .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, {
+      user: createdUser,
+      accessToken,
+      refreshToken,
+    }, "User registered and logged in successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -100,12 +127,7 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  };
+  const options = getCookieOptions();
 
   return res
     .status(200)
@@ -139,18 +161,13 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  };
+  const options = getClearCookieOptions();
 
   return res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "user logged successfully"));
+    .json(new ApiResponse(200, {}, "user logged out successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -176,12 +193,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       throw new ApiError(401, "refresh token is expried or used");
     }
 
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    };
+    const options = getCookieOptions();
 
     const { accessToken, newRefreshToken } =
       await generateAccessAndRefreshToken(user._id);
@@ -293,33 +305,61 @@ const updateUserSettings = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Unauthorized");
   }
 
-  const updateData = {};
-  
-  if (settings) {
-    updateData.settings = settings;
-  }
-  
-  if (fullName !== undefined) {
-    updateData.fullName = fullName.trim();
-  }
-  
-  if (bio !== undefined) {
-    updateData.bio = bio.trim();
-  }
+  try {
+    const updateData = {};
+    
+    // Handle settings updates with proper nesting
+    if (settings) {
+      // Handle theme setting
+      if (settings.theme) {
+        updateData['settings.theme'] = settings.theme;
+      }
+      
+      // Handle notification settings
+      if (settings.notifications) {
+        Object.keys(settings.notifications).forEach(key => {
+          updateData[`settings.notifications.${key}`] = settings.notifications[key];
+        });
+      }
+      
+      // Handle privacy settings
+      if (settings.privacy) {
+        Object.keys(settings.privacy).forEach(key => {
+          updateData[`settings.privacy.${key}`] = settings.privacy[key];
+        });
+      }
+    }
+    
+    if (fullName !== undefined) {
+      updateData.fullName = fullName.trim();
+    }
+    
+    if (bio !== undefined) {
+      updateData.bio = bio.trim();
+    }
 
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { $set: updateData },
-    { new: true, runValidators: true }
-  ).select("-password -refreshToken");
+    console.log('Updating user settings with data:', updateData);
 
-  if (!user) {
-    throw new ApiError(404, "User not found");
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password -refreshToken");
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    console.log('Settings updated successfully for user:', user.email);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { user }, "Settings updated successfully"));
+      
+  } catch (error) {
+    console.error('Error updating user settings:', error);
+    throw new ApiError(500, `Failed to update settings: ${error.message}`);
   }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { user }, "Settings updated successfully"));
 });
 
 // Initialize Google OAuth client
@@ -401,11 +441,7 @@ const googleAuth = asyncHandler(async (req, res) => {
       "-password -refreshToken"
     );
 
-    const options = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    };
+    const options = getCookieOptions();
 
     return res
       .status(200)
@@ -548,12 +584,7 @@ const handleGoogleCallback = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
     // Set secure cookies
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    };
+    const cookieOptions = getCookieOptions();
 
     res.cookie('accessToken', accessToken, cookieOptions);
     res.cookie('refreshToken', refreshToken, cookieOptions);

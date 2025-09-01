@@ -4,7 +4,7 @@ import { useForms } from '../Context/StoreContext';
 
 const GoogleSignInButton = ({ onSuccess, onError, text = "Sign in with Google" }) => {
   const buttonRef = useRef(null);
-  const { setIsAuthenticated, setUserData } = useForms();
+  const { setIsAuthenticated, setUserData, applyTheme, checkAuthStatus } = useForms();
 
   useEffect(() => {
     // Load Google Identity Services script
@@ -52,6 +52,20 @@ const GoogleSignInButton = ({ onSuccess, onError, text = "Sign in with Google" }
       if (result.data.data) {
         setIsAuthenticated(true);
         setUserData(result.data.data);
+        
+        // Apply theme if user has theme settings
+        if (result.data.data.settings?.theme) {
+          console.log('🎨 Applying user theme:', result.data.data.settings.theme);
+          applyTheme(result.data.data.settings.theme);
+        }
+        
+        // Trigger a fresh auth check to ensure everything is in sync
+        setTimeout(() => {
+          checkAuthStatus().then(() => {
+            console.log('🔄 Auth status refreshed after Google sign-in');
+          });
+        }, 100);
+        
         onSuccess && onSuccess(result.data.data);
       }
     } catch (error) {

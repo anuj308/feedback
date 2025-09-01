@@ -62,6 +62,12 @@ app.use("/api/v1", healthRouter); // Health check routes
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
+  console.error('Request details:', {
+    method: req.method,
+    url: req.originalUrl,
+    body: req.body,
+    headers: req.headers
+  });
   
   // Default error response
   const statusCode = err.statusCode || 500;

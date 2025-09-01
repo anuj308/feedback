@@ -7,7 +7,7 @@ import { UserProfileDropdown, GoogleSignInButton } from "../components/index";
 import { usePageTitle } from "../hooks/usePageTitle";
 
 const Login = () => {
-  const { isAuthenticated, setUser, setIsAuthenticated, setUserData, userData, isLoading, setIsLoading } = useForms();
+  const { isAuthenticated, setUser, setIsAuthenticated, setUserData, userData, isLoading, setIsLoading, applyTheme, checkAuthStatus } = useForms();
   const [error, setError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
   const { register, handleSubmit } = useForm();
@@ -41,12 +41,27 @@ const Login = () => {
         console.log("✅ Login successful");
         console.log("👤 User data:", response.data.data);
         
+        // The response structure has user data nested under 'user' property
+        const userData = response.data.data.user || response.data.data;
+        
         // Update authentication state directly
         setIsAuthenticated(true);
-        setUserData(response.data.data);
-        console.log(response)
-        console.log("🏠 Navigating to home...");
-        // navigate("/");
+        setUserData(userData);
+        
+        // Apply theme if user has theme settings
+        if (userData.settings?.theme) {
+          console.log('🎨 Applying user theme:', userData.settings.theme);
+          applyTheme(userData.settings.theme);
+        }
+        
+        // Call checkAuthStatus to ensure everything is in sync
+        setTimeout(() => {
+          checkAuthStatus().then(() => {
+            console.log('🔄 Auth status refreshed after email login');
+            console.log("🏠 Navigating to home...");
+            navigate("/");
+          });
+        }, 100);
       } else {
         setError("Invalid response from server");
       }

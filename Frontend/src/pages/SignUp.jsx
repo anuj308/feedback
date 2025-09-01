@@ -8,7 +8,7 @@ import { usePageTitle } from "../hooks/usePageTitle";
 // import { ProfilePicture } from "../components";
 
 const SignUp = () => {
-  const { changeStatus, status, url, userData, setUser } = useForms();
+  const { isAuthenticated, setIsAuthenticated, setUserData, applyTheme, checkAuthStatus } = useForms();
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
@@ -38,20 +38,46 @@ const SignUp = () => {
       console.log("✅ Registration successful");
       console.log("👤 User data:", response.data.data);
       
-      setUser(response.data.data);
-      changeStatus(true);
-      navigate("/");
+      // Check for success
+      const isSuccess = response.data.Success || response.data.success || response.status === 200;
+      
+      if (isSuccess && response.data.data) {
+        // The response structure has user data nested under 'user' property
+        const userData = response.data.data.user || response.data.data;
+        
+        // Update authentication state
+        setIsAuthenticated(true);
+        setUserData(userData);
+        
+        // Apply theme if user has theme settings
+        if (userData.settings?.theme) {
+          console.log('🎨 Applying user theme:', userData.settings.theme);
+          applyTheme(userData.settings.theme);
+        }
+        
+        // Call checkAuthStatus to ensure everything is in sync
+        setTimeout(() => {
+          checkAuthStatus().then(() => {
+            console.log('🔄 Auth status refreshed after registration');
+            console.log("🏠 Navigating to home...");
+            navigate("/");
+          });
+        }, 100);
+      } else {
+        setError("Invalid response from server");
+      }
     } catch (error) {
       console.error("❌ Registration failed:", error);
       setError(error.response?.data?.message || error.message || "Registration failed");
     }
   };
 
-  useEffect(()=>{
-    if(status){
-        navigate("/")
+  useEffect(() => {
+    // If already authenticated, redirect to home
+    if (isAuthenticated) {
+      navigate("/");
     }
-},[])
+  }, [isAuthenticated, navigate]);
 
   return (
     <>

@@ -77,15 +77,20 @@ function App() {
       
       if (authStatus === 'success') {
         console.log('✅ OAuth authentication successful');
-        // Clean URL
+        // Clean URL first
         window.history.replaceState({}, document.title, window.location.pathname);
+        // Force a fresh auth check to update user data
+        checkAuthStatus().then(() => {
+          console.log('🔄 User data refreshed after OAuth success');
+        });
       } else if (authError) {
         console.log('❌ OAuth authentication failed:', authError);
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname);
+        checkAuthStatus();
+      } else {
+        checkAuthStatus();
       }
-      
-      checkAuthStatus();
     }
   }, []);
 
@@ -104,11 +109,18 @@ function App() {
       
       if (isSuccess && response.data.data) {
         if (import.meta.env.VITE_DEBUG_API !== 'true') {
-          console.log("✅ User authenticated");
+          console.log("✅ User authenticated", response.data.data);
         }
         
         setIsAuthenticated(true);
         setUserData(response.data.data);
+        
+        // Force theme application if user has theme settings
+        if (response.data.data.settings?.theme) {
+          setTimeout(() => {
+            applyTheme(response.data.data.settings.theme);
+          }, 0);
+        }
       } else {
         console.log("❌ User not authenticated - invalid response format");
         handleAuthFailure();
@@ -128,7 +140,7 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [applyTheme]);
 
   const handleAuthFailure = useCallback(() => {
     if (import.meta.env.VITE_DEBUG_API !== 'true') {
