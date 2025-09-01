@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://feedback-a91d.onrender.com/api/v1',
   timeout: 15000, // 15 seconds timeout (increased from 10s)
   withCredentials: true, // Send cookies with requests
   headers: {

@@ -1,10 +1,4 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "https://your-actual-backend-domain.com/api/$1"
-    }
-  ],
   "routes": [
     {
       "src": "/login",
@@ -31,7 +25,7 @@
       "dest": "/index.html"
     },
     {
-      "src": "/((?!api).)*",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ]
