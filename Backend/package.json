@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test:oauth": "node test-oauth.js"
   },
   "author": "",
   "license": "ISC",

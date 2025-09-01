@@ -25,6 +25,12 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("uploads"));
 app.use(cookieParser());
 
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+  console.log(`📝 ${req.method} ${req.originalUrl} - ${new Date().toISOString()}`);
+  next();
+});
+
 // Security headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -47,5 +53,29 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/form", formRouter);
 app.use("/api/v1/store", storeRouter);
 app.use("/api/v1", healthRouter); // Health check routes
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  
+  // Default error response
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+  
+  res.status(statusCode).json({
+    success: false,
+    message,
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
+
+// 404 handler for unmatched routes
+app.use('*', (req, res) => {
+  console.log(`❌ 404 - Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.method} ${req.originalUrl} not found`,
+  });
+});
 
 export { app };

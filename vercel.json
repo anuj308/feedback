@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "name": "feedback-fullstack",
+  "builds": [
+    {
+      "src": "Frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    },
+    {
+      "src": "Backend/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/v1/(.*)",
+      "dest": "Backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "Frontend/dist/$1"
+    }
+  ],
+  "buildCommand": "cd Frontend && npm run build",
+  "outputDirectory": "Frontend/dist",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

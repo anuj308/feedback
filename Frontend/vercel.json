@@ -1,0 +1,38 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://your-actual-backend-domain.com/api/$1"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/login",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/signup", 
+      "dest": "/index.html"
+    },
+    {
+      "src": "/dashboard",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/settings",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/admin",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/form/(.*)",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/((?!api).)*",
+      "dest": "/index.html"
+    }
+  ]
+}

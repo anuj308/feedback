@@ -22,15 +22,38 @@ This guide will help you set up Google Sign-In/Sign-Up functionality for your fe
    - Go to "APIs & Services" > "Credentials"
    - Click "Create Credentials" > "OAuth 2.0 Client ID"
    - Choose "Web application" as the application type
-   - Add authorized origins:
-     - `http://localhost:5173` (for development)
-     - Your production domain
-   - Add authorized redirect URIs:
-     - `http://localhost:5173/auth/google/callback` (for development)
-     - Your production callback URL
+   
+   **Authorized JavaScript origins:**
+   - `http://localhost:5173` (for development)
+   - `http://localhost:3000` (alternative dev port)
+   - `https://your-frontend-domain.vercel.app` (production frontend)
+   - `https://your-backend-domain.vercel.app` (production backend, if different)
+   - `https://feedback-red-seven.vercel.app` (example production domain)
+   
+   **Authorized redirect URIs:**
+   - ⚠️ **IMPORTANT**: For Google Identity Services (One Tap), you typically DON'T need redirect URIs
+   - Leave this section empty unless using traditional OAuth flow
+   - If you need them: `https://your-domain.vercel.app` (without callback path)
 
 4. **Copy your credentials:**
    - Copy the Client ID and Client Secret
+
+## IMPORTANT: Production Domain Configuration
+
+For production, you MUST add your exact Vercel domain to authorized origins:
+
+1. **Find your Vercel domains:**
+   - Frontend domain: Check your Vercel dashboard
+   - Backend domain: Check your API endpoint URL
+
+2. **Add ALL variations:**
+   ```
+   https://your-app-name.vercel.app
+   https://your-app-name-git-main-username.vercel.app
+   https://your-custom-domain.com (if using custom domain)
+   ```
+
+3. **Common mistake:** Using `http://` instead of `https://` for production domains
 
 ## Step 2: Update Environment Variables
 
@@ -128,12 +151,29 @@ Returns Google OAuth URL (for alternative implementation).
 
 ### Common Issues:
 
-1. **"Invalid client" error:**
+1. **"origin_mismatch" or "Access blocked" error:**
+   - ⚠️ **MOST COMMON ISSUE**: Production domain not added to Google Cloud Console
+   - Go to Google Cloud Console > APIs & Services > Credentials
+   - Edit your OAuth 2.0 Client ID
+   - Add your exact production domain to "Authorized JavaScript origins"
+   - Wait 5-10 minutes for changes to propagate
+   - Example: Add `https://feedback-red-seven.vercel.app`
+
+2. **"Invalid client" error:**
    - Check that your Client ID is correctly set in environment variables
    - Verify the Client ID in Google Cloud Console
 
-2. **"Unauthorized JavaScript origin" error:**
+3. **"Unauthorized JavaScript origin" error:**
    - Add your development URL (`http://localhost:5173`) to authorized origins in Google Cloud Console
+
+4. **Redirect URI errors:**
+   - For Google Identity Services, you typically don't need redirect URIs
+   - Remove `/auth/google/callback` paths from redirect URIs
+   - Only add the base domain without callback paths
+
+5. **Multiple domains not working:**
+   - Ensure you've added both frontend and backend domains
+   - Check if you're using different domains for different environments
 
 3. **Google button not appearing:**
    - Check browser console for JavaScript errors

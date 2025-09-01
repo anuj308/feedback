@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   timeout: 15000, // 15 seconds timeout (increased from 10s)
   withCredentials: true, // Send cookies with requests
   headers: {

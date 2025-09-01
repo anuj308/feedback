@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -320,43 +321,27 @@ const updateUserSettings = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { user }, "Settings updated successfully"));
 });
 
-// Simple function to decode JWT payload (for development/testing)
-const decodeGoogleJWT = (token) => {
+// Initialize Google OAuth client
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Verify Google JWT token
+const verifyGoogleToken = async (token) => {
   try {
-    // Split the token
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      throw new Error('Invalid JWT format');
-    }
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
     
-    // Decode the payload (middle part)
-    const payload = JSON.parse(
-      Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()
-    );
+    const payload = ticket.getPayload();
     
-    // Basic validation
-    if (!payload.iss || !payload.aud || !payload.exp) {
-      throw new Error('Invalid JWT payload');
-    }
-    
-    // Check if token is expired
-    if (payload.exp * 1000 < Date.now()) {
-      throw new Error('Token expired');
-    }
-    
-    // Check issuer
-    if (payload.iss !== 'accounts.google.com' && payload.iss !== 'https://accounts.google.com') {
-      throw new Error('Invalid issuer');
-    }
-    
-    // Check audience (should be your Google Client ID)
-    if (payload.aud !== process.env.GOOGLE_CLIENT_ID) {
-      throw new Error('Invalid audience');
+    // Verify the token is valid
+    if (!payload) {
+      throw new Error('Invalid token payload');
     }
     
     return payload;
   } catch (error) {
-    throw new Error(`JWT verification failed: ${error.message}`);
+    throw new Error(`Google token verification failed: ${error.message}`);
   }
 };
 
@@ -369,8 +354,8 @@ const googleAuth = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Decode and verify the JWT credential
-    const payload = decodeGoogleJWT(credential);
+    // Verify the Google JWT token properly
+    const payload = await verifyGoogleToken(credential);
     
     const googleUser = {
       id: payload.sub,
@@ -418,7 +403,8 @@ const googleAuth = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      domain: process.env.NODE_ENV === 'production' ? '.vercel.app' : undefined
     };
 
     return res
