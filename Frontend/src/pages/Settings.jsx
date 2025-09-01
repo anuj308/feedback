@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForms } from '../Context/StoreContext';
 import { api, endpoints } from '../utils/api';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateUser, applyTheme } = useForms();
+  
+  // Set page title
+  usePageTitle("Settings - Feedback Form Builder");
   
   const [settings, setSettings] = useState({
     theme: 'light', // light, dark, auto

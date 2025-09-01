@@ -3,6 +3,7 @@ import { HomeCard, RenameCard, HomeNavbar } from "../components/index.js";
 import { api, endpoints } from "../utils/api";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const Home = () => {
   const [allForms, setAllForms] = useState([]);
@@ -18,6 +19,9 @@ const Home = () => {
     isLoading,
     setIsLoading,
   } = useForms();
+
+  // Set page title
+  usePageTitle("Dashboard - Feedback Form Builder");
   const [showRename, setShowRename] = useState(false);
 
   // Handle search functionality

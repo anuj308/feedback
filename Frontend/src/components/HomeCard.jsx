@@ -28,12 +28,6 @@ const HomeCard = ({ fon,del,rename,id,cleanfun }) => {
           >
             Rename
           </div>
-          <div
-            onClick={() => navigate("/form/"+id)}
-            className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800 rounded p-2 cursor-pointer hover:bg-green-200 dark:hover:bg-green-900/40 transition-colors"
-          >
-            Form
-          </div>
         </div>
       </div>
     </>

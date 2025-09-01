@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminIndividualCard, DataAdminCard, AnalyticsSummaryCard } from "../components";
 import { useForms } from "../Context/StoreContext";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const Admin = () => {
   const { fId: formId } = useParams();
@@ -15,6 +16,9 @@ const Admin = () => {
   const [responses, setResponses] = useState([]);
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Set dynamic page title based on form title
+  usePageTitle(form?.title ? `Admin: ${form.title} - Feedback Form Builder` : "Admin Dashboard - Feedback Form Builder");
 
   // Redirect to login if not authenticated
   useEffect(() => {

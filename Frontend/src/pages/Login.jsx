@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useForms } from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
 import { UserProfileDropdown, GoogleSignInButton } from "../components/index";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const Login = () => {
   const { isAuthenticated, setUser, setIsAuthenticated, setUserData, userData, isLoading, setIsLoading } = useForms();
@@ -11,6 +12,9 @@ const Login = () => {
   const [loginLoading, setLoginLoading] = useState(false);
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
+  
+  // Set page title
+  usePageTitle("Sign In - Feedback Form Builder");
   
   const handleGoogleSuccess = (userData) => {
     console.log("✅ Google sign-in successful");

@@ -12,6 +12,7 @@ import { FormProvider } from "./Context/StoreContext";
 import Form from "./pages/Form";
 import Admin from "./pages/Admin";
 import { api, endpoints } from "./utils/api";
+import { useRouteTitle } from "./hooks/usePageTitle";
 
 // Component to conditionally render Navbar
 const ConditionalNavbar = () => {
@@ -23,6 +24,12 @@ const ConditionalNavbar = () => {
                           location.pathname.startsWith('/form/');
   
   return !shouldHideNavbar ? <Navabar /> : null;
+};
+
+// Component to handle route-based title updates
+const TitleManager = () => {
+  useRouteTitle();
+  return null;
 };
 
 function App() {
@@ -194,6 +201,7 @@ function App() {
       }}
     >
       <BrowserRouter>
+        <TitleManager />
         <ConditionalNavbar />
         <Routes>
           <Route path="/" element={<Home />} />

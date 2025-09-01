@@ -6,6 +6,7 @@ import { api, endpoints } from "../utils/api";
 import Admin from "./Admin";
 import useAutoSave from "../hooks/useAutoSave";
 import useToast from "../hooks/useToast";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const CreateForm = () => {
   const navigate = useNavigate();
@@ -37,6 +38,9 @@ const CreateForm = () => {
   const [currentTab, setCurrentTab] = useState("create");
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [settingsRefreshTrigger, setSettingsRefreshTrigger] = useState(0);
+
+  // Set dynamic page title based on form title
+  usePageTitle(headData.title ? `Edit: ${headData.title} - Feedback Form Builder` : "Create Form - Feedback Form Builder");
   const [isPublished, setIsPublished] = useState(false);
   const [acceptingResponses, setAcceptingResponses] = useState(false);
 

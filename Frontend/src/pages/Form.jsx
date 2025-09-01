@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api, endpoints } from "../utils/api";
 import { FormHead, Button, FormCard, Toast } from "../components/index";
 import { useToast } from "../hooks/useToast";
+import { usePageTitle } from "../hooks/usePageTitle";
 
 const Form = () => {
   const { fId } = useParams();
@@ -15,6 +16,9 @@ const Form = () => {
   const [formSettings, setFormSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState("");
+
+  // Set dynamic page title based on form title
+  usePageTitle(formTitle ? `${formTitle} - Feedback Form Builder` : "Form - Feedback Form Builder");
 
   const updateAnswer = (questionId, answer) => {
     setAnswers((prev) => {

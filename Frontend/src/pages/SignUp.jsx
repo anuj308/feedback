@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForms} from "../Context/StoreContext";
 import { api, endpoints } from "../utils/api";
 import { GoogleSignInButton } from "../components/index";
+import { usePageTitle } from "../hooks/usePageTitle";
 // import { ProfilePicture } from "../components";
 
 const SignUp = () => {
@@ -11,6 +12,9 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const { register, handleSubmit } = useForm();
   const navigate = useNavigate();
+
+  // Set page title
+  usePageTitle("Sign Up - Feedback Form Builder");
 
   const handleGoogleSuccess = (userData) => {
     console.log("✅ Google sign-up successful");
