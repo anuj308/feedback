@@ -169,6 +169,7 @@ export const endpoints = {
 
   // User endpoints
   user: {
+    currentUser: '/user/current-user', // Duplicate for backward compatibility
     updateSettings: '/user/update-settings',
     updateAccount: '/user/update-account',
     updateAvatar: '/user/avatar',

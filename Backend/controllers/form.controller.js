@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import { Form } from "../models/from.model.js";
 import { Store } from "../models/store.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
@@ -64,11 +66,41 @@ const getForm = asyncHandler(async (req, res) => {
   if (!formId) {
     throw new ApiError(400, "id is required");
   }
+  
   const form = await Form.findById(formId);
 
   if (!form) {
-    throw new ApiError(500, "something went wrong will fetching form");
+    throw new ApiError(404, "Form not found");
   }
+
+  // Check if form is published
+  if (!form.isPublished) {
+    throw new ApiError(403, "Form is not published");
+  }
+
+  // If form requires sign in, check for authentication
+  if (form.settings?.requireSignIn) {
+    // Try to extract token and verify user
+    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+    
+    if (!token) {
+      throw new ApiError(401, "Authentication required for this form");
+    }
+
+    try {
+      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+      
+      if (!user) {
+        throw new ApiError(401, "Invalid Access Token");
+      }
+      
+      req.user = user;
+    } catch (error) {
+      throw new ApiError(401, "Invalid Access Token");
+    }
+  }
+
   return res
     .status(200)
     .json(new ApiResponse(200, { form }, "fetched form successfully"));

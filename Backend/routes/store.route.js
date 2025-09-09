@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.route("/").post(verifyJWT, storeForm);
+router.route("/").post(storeForm); // Remove auth - handle in controller
 router
   .route("/f/:formId")
   .get(verifyJWT, getAllResponsesByFormId)

@@ -37,20 +37,6 @@ const Form = () => {
 
   const storeForm = async () => {
     try {
-      // Check if sign in is required
-      if (formSettings.requireSignIn) {
-        // Check if user is logged in
-        try {
-          await api.get(endpoints.user.currentUser);
-        } catch (error) {
-          if (error.response?.status === 401) {
-            showErrorToast("You need to sign in to submit this form");
-            setTimeout(() => navigate("/login"), 1500);
-            return;
-          }
-        }
-      }
-      
       // Validate required questions
       const requiredQuestions = questions.filter(q => q.required);
       const answeredQuestions = answers.map(a => a.questionId);
@@ -65,11 +51,18 @@ const Form = () => {
         return;
       }
 
-      const response = await api.post(endpoints.store.submit, {
+      // Use main endpoint for form submission (backend handles auth)
+      const submissionData = {
         formId: fId,
         answers: answers,
-        email: formSettings.collectEmail ? userEmail : undefined,
-      });
+      };
+
+      // Add email if collecting email and not signed in
+      if (formSettings.collectEmail && userEmail) {
+        submissionData.email = userEmail;
+      }
+
+      const response = await api.post(endpoints.store.submit, submissionData);
       
       // Show success message based on form settings
       const message = formSettings.confirmationMessage || "Thank you for your response!";
@@ -89,9 +82,21 @@ const Form = () => {
       
       if (error.response?.status === 400) {
         showErrorToast(error.response.data.message || "Error submitting response");
-      } else if (error.response?.status === 401 && formSettings.requireSignIn) {
+      } else if (error.response?.status === 401) {
         showErrorToast("You need to sign in to submit this form");
-        setTimeout(() => navigate("/login"), 1500);
+        setTimeout(() => navigate("/login"), 2000);
+      } else if (error.response?.status === 403) {
+        if (error.response.data.message?.includes("not published")) {
+          showErrorToast("This form is not published");
+        } else if (error.response.data.message?.includes("not authorized")) {
+          showErrorToast("You are not authorized to submit responses to this form");
+        } else {
+          showErrorToast("Access denied");
+        }
+        setTimeout(() => navigate("/"), 2000);
+      } else if (error.response?.status === 429) {
+        // Rate limiting error - show the specific message from backend
+        showErrorToast(error.response.data.message || "Too many requests. Please wait before trying again.");
       } else {
         showErrorToast("Error submitting response. Please try again.");
       }
@@ -103,13 +108,19 @@ const Form = () => {
       console.log("📖 Loading form data for formId:", fId);
       try {
         setLoading(true);
+        // Use main endpoint to fetch form data (auth handled in backend)
         const response = await api.get(endpoints.forms.getById(fId));
+        console.log("📋 Raw API Response:", response.data);
+        
         const form = response.data.data.form;
+        console.log("📄 Form object:", form);
         
         console.log("📄 Form loaded for submission:", { 
           title: form.formTitle, 
           questionsCount: form.questions?.length || 0,
-          settings: form.settings 
+          settings: form.settings,
+          hasQuestions: !!form.questions,
+          questionsArray: form.questions
         });
         
         setFormTitle(form.formTitle);
@@ -125,49 +136,24 @@ const Form = () => {
             questionsToSet = questionsToSet.sort(() => Math.random() - 0.5);
           }
           
+          console.log("📝 Setting questions:", questionsToSet);
           setQuestions(questionsToSet);
         } else {
-          console.warn("⚠️ No questions found in form");
+          console.warn("⚠️ No questions found in form", { 
+            questions: form.questions, 
+            questionsLength: form.questions?.length,
+            formKeys: Object.keys(form) 
+          });
         }
         
-        // Check if form is accepting responses
-        if (form.acceptingResponses === false) {
-          showErrorToast("This form is no longer accepting responses");
-          setTimeout(() => navigate("/"), 1500);
-          return;
-        }
-        
-        // Check access control and collect email if needed
-        if (form.settings?.allowedEmails && form.settings.allowedEmails.length > 0) {
+        // Try to get user email if they're logged in (for email collection)
+        if (form.settings?.collectEmail) {
           try {
-            const userResponse = await api.get(endpoints.user.currentUser);
-            const email = userResponse.data.data.user.email;
-            setUserEmail(email);
-            
-            if (!form.settings.allowedEmails.includes(email)) {
-              showErrorToast("You are not authorized to access this form");
-              setTimeout(() => navigate("/"), 1500);
-              return;
-            }
-          } catch (error) {
-            if (error.response?.status === 401) {
-              showErrorToast("You need to sign in to access this form");
-              setTimeout(() => navigate("/login"), 1500);
-              return;
-            }
-          }
-        } else if (form.settings?.collectEmail) {
-          // Try to get user email for collection
-          try {
-            const userResponse = await api.get(endpoints.user.currentUser);
+            const userResponse = await api.get(endpoints.auth.currentUser);
             setUserEmail(userResponse.data.data.user.email);
           } catch (error) {
-            // User not logged in, but email collection is required
-            if (form.settings?.requireSignIn) {
-              showErrorToast("You need to sign in to submit this form");
-              setTimeout(() => navigate("/login"), 1500);
-              return;
-            }
+            // User not logged in, but that's OK for public forms
+            console.log("User not logged in, but form doesn't require sign-in");
           }
         }
         
@@ -175,7 +161,26 @@ const Form = () => {
         console.error("Error while fetching form", error);
         if (error.response?.status === 404) {
           showErrorToast("Form not found");
-          setTimeout(() => navigate("/"), 1500);
+          setTimeout(() => navigate("/"), 2000);
+        } else if (error.response?.status === 401) {
+          showErrorToast("Please sign in to access this form. Redirecting to login...");
+          setTimeout(() => navigate("/login"), 2000);
+        } else if (error.response?.status === 403) {
+          if (error.response.data.message?.includes("not published")) {
+            showErrorToast("This form is not published");
+          } else if (error.response.data.message?.includes("Authentication required")) {
+            showErrorToast("Please sign in to access this form. Redirecting to login...");
+            setTimeout(() => navigate("/login"), 2000);
+          } else {
+            showErrorToast("Access denied");
+            setTimeout(() => navigate("/"), 2000);
+          }
+        } else if (error.response?.status === 429) {
+          // Rate limiting error when loading form
+          showErrorToast("Too many requests. Please wait a moment before trying again.");
+        } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+          // Timeout error
+          showErrorToast("Request timed out. Please check your connection and try again.");
         } else {
           showErrorToast("Error loading form. Please try again.");
         }
@@ -186,72 +191,63 @@ const Form = () => {
     func();
   }, [fId, navigate]);
 
-  // Helper function to extract options from legacy structure
-  const extractOptions = (legacyItem) => {
-    const options = [];
-    if (legacyItem.multipleChoice) {
-      options.push(...legacyItem.multipleChoice.map(mc => mc.value).filter(v => v));
-    }
-    if (legacyItem.checkBoxes) {
-      options.push(...legacyItem.checkBoxes.map(cb => cb.value).filter(v => v));
-    }
-    return options;
-  };
-
-  if (loading) {
-    return (
-      <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg p-8">
-        <div className="text-center">Loading form...</div>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg">
-        <FormHead 
-          headData={{ formTitle, formDescription }} 
-          readOnly={true}
-        />
-        
-        {formSettings.showProgressBar && questions.length > 0 && (
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mx-6 my-4">
-            <div 
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
-              style={{ 
-                width: `${Math.round((answers.filter(a => a.answer && a.answer !== '').length / questions.length) * 100)}%` 
-              }}
-            ></div>
-            <div className="text-xs text-gray-500 text-center mt-1">
-              {answers.filter(a => a.answer && a.answer !== '').length} of {questions.length} questions answered
-            </div>
+      {loading ? (
+        <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg">
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-32 rounded-t"></div>
+          <div className="p-6 space-y-4">
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-6 rounded"></div>
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-4 rounded w-3/4"></div>
+            <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-10 rounded"></div>
           </div>
-        )}
-        
-        <div className="my-8">
-          {questions.map((question, index) => (
-            <div key={question.questionId}>
-              <FormCard
-                question={question}
-                questionId={question.questionId}
-                type={question.type}
-                questionText={question.question}
-                description={question.description}
-                required={question.required}
-                options={question.options || []}
-                updateAnswer={updateAnswer}
-                currentAnswer={answers.find(a => a.questionId === question.questionId)?.answer || ""}
-              />
+        </div>
+      ) : (
+        <div className="mx-auto md:w-1/2 mt-14 rounded overflow-hidden shadow-lg">
+          <FormHead 
+            headData={{ formTitle, formDescription }} 
+            readOnly={true}
+          />
+          
+          {formSettings.showProgressBar && questions.length > 0 && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mx-6 my-4">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                style={{ 
+                  width: `${Math.round((answers.filter(a => a.answer && a.answer !== '').length / questions.length) * 100)}%` 
+                }}
+              ></div>
+              <div className="text-xs text-gray-500 text-center mt-1">
+                {answers.filter(a => a.answer && a.answer !== '').length} of {questions.length} questions answered
+              </div>
             </div>
-          ))}
+          )}
+          
+          <div className="my-8">
+            {questions.map((question, index) => (
+              <div key={question.questionId}>
+                <FormCard
+                  question={question}
+                  questionId={question.questionId}
+                  type={question.type}
+                  questionText={question.question}
+                  description={question.description}
+                  required={question.required}
+                  options={question.options || []}
+                  updateAnswer={updateAnswer}
+                  currentAnswer={answers.find(a => a.questionId === question.questionId)?.answer || ""}
+                />
+              </div>
+            ))}
+          </div>
+          
+          <div className="px-6 py-4">
+            <Button onClick={storeForm} className="w-full">
+              Submit Response
+            </Button>
+          </div>
         </div>
-        
-        <div className="px-6 py-4">
-          <Button onClick={storeForm} className="w-full">
-            Submit Response
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Toast notifications */}
       {toasts.map(toast => (

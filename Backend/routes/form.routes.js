@@ -21,7 +21,7 @@ const router = express.Router();
 router.route("/create").post(verifyJWT, createForm)
 router
   .route("/f/:formId")
-  .get(verifyJWT, getForm)
+  .get(getForm) // Remove auth - handle in controller
   .delete(verifyJWT, deleteForm)
   .patch(verifyJWT, renameForm)
   .post(verifyJWT, updateForm);

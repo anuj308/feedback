@@ -86,13 +86,6 @@ const FormCard = ({
       </div>
 
       <div className="px-6 pt-4 pb-6">
-        {/* Debug info - remove this after fixing */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-2 p-2 bg-yellow-100 text-xs text-gray-600 rounded">
-            Debug: type="{type}", questionId="{questionId}"
-          </div>
-        )}
-        
         {type === "shortAnswer" && (
           <div>
             <Input

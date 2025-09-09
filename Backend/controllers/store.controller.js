@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import { Store } from "../models/store.model.js";
 import { Form } from "../models/from.model.js";
+import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/fileUpload.js";
@@ -28,12 +30,30 @@ const storeForm = asyncHandler(async (req, res) => {
     throw new ApiError(400, "This form is no longer accepting responses");
   }
 
-  // Check if form settings require sign-in
-  if (form.settings?.requireSignIn && !req.user) {
-    throw new ApiError(401, "Sign-in required to submit response");
+  // Check if form requires sign-in and handle authentication
+  if (form.settings?.requireSignIn) {
+    // Try to extract token and verify user
+    const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+    
+    if (!token) {
+      throw new ApiError(401, "Authentication required for this form");
+    }
+
+    try {
+      const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+      
+      if (!user) {
+        throw new ApiError(401, "Invalid Access Token");
+      }
+      
+      req.user = user;
+    } catch (error) {
+      throw new ApiError(401, "Invalid Access Token");
+    }
   }
 
-  // Check for one response limit
+  // Check for one response limit (only applies to authenticated users)
   if (form.settings?.limitToOneResponse && req.user) {
     const existingResponse = await Store.findOne({
       formId: formId,
@@ -41,7 +61,24 @@ const storeForm = asyncHandler(async (req, res) => {
     });
     
     if (existingResponse) {
-      throw new ApiError(400, "You have already submitted a response to this form");
+      throw new ApiError(400, "You have already submitted a response to this form. Only one response per user is allowed.");
+    }
+  }
+
+  // For anonymous users, check for potential duplicate submissions based on IP and user agent
+  if (!req.user) {
+    // Check for recent submissions from same IP to prevent spam
+    const recentSubmissions = await Store.find({
+      formId: formId,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent'),
+      submittedAt: { 
+        $gte: new Date(Date.now() - 5 * 60 * 1000) // Last 5 minutes
+      }
+    });
+
+    if (recentSubmissions.length >= 3) {
+      throw new ApiError(429, "Too many submissions detected. Please wait 5 minutes before submitting again to prevent spam.");
     }
   }
 
