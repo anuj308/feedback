@@ -85,7 +85,7 @@ const Admin = () => {
 
   const fetchFormData = async () => {
     try {
-      const formResponse = await api.get(endpoints.forms.getById(formId));
+      const formResponse = await api.get(endpoints.forms.getForEdit(formId));
       setForm(formResponse.data.data.form);
     } catch (error) {
       console.error("❌ Error fetching form:", error);

@@ -300,12 +300,12 @@ const CreateForm = () => {
 
   useEffect(() => {
     const func = async () => {
-      console.log("📖 Loading form data for formId:", fId);
+      console.log("📖 Loading form data for editing, formId:", fId);
       try {
-        const response = await api.get(endpoints.forms.getById(fId));
+        const response = await api.get(endpoints.forms.getForEdit(fId));
         const form = response.data.data.form;
         
-        console.log("📄 Form loaded:", { 
+        console.log("📄 Form loaded for editing:", { 
           title: form.formTitle, 
           questionsCount: form.questions?.length || 0 
         });

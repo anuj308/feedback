@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { HomeCard, RenameCard, HomeNavbar } from "../components/index.js";
+import { HomeCard, RenameCard, HomeNavbar, TemplateGallery } from "../components/index.js";
 import { api, endpoints } from "../utils/api";
 import { useForms } from "../Context/StoreContext";
 import { useNavigate } from "react-router-dom";
@@ -147,8 +147,32 @@ const Home = () => {
           />
         </div>
       )}
+
+      {/* Templates Section */}
+      <div className="bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 py-2">
+          <TemplateGallery 
+            isHomePage={true}
+            maxVisible={6}
+            showCategories={false}
+            showHeader={true}
+          />
+        </div>
+      </div>
       
-      <div className="min-h-[80vh] mt-0 py-20 px-6 pt-8 pb-2 flex flex-row flex-wrap justify-center w-full bg-gray-50 dark:bg-gray-900">
+      {/* My Forms Section */}
+      <div className="bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-6 py-3">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              My Forms
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Manage and edit your existing forms
+            </p>
+          </div>
+          
+          <div className="min-h-[40vh] flex flex-row flex-wrap justify-center w-full">
         {formsLoading ? (
           <div className="flex flex-col items-center justify-center h-80">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -200,6 +224,8 @@ const Home = () => {
             })}
           </>
         )}
+          </div>
+        </div>
       </div>
     </>
   );

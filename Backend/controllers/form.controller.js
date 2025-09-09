@@ -106,6 +106,30 @@ const getForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, { form }, "fetched form successfully"));
 });
 
+// Get form for editing (owner can access unpublished forms)
+const getFormForEdit = asyncHandler(async (req, res) => {
+  const { formId } = req.params;
+
+  if (!formId) {
+    throw new ApiError(400, "Form ID is required");
+  }
+  
+  const form = await Form.findById(formId);
+
+  if (!form) {
+    throw new ApiError(404, "Form not found");
+  }
+
+  // Check if user owns the form (only owner can edit)
+  if (form.Owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized to edit this form");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { form }, "Form fetched for editing successfully"));
+});
+
 const getAllFormByOwnerId = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
 
@@ -543,6 +567,7 @@ const publishForm = asyncHandler(async (req, res) => {
 export {
   createForm,
   getForm,
+  getFormForEdit,
   getAllFormByOwnerId,
   renameForm,
   deleteForm,

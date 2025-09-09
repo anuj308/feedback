@@ -5,6 +5,7 @@ import {
   updateForm,
   getAllFormByOwnerId,
   getForm,
+  getFormForEdit,
   renameForm,
   toogleResponses,
   getFormAnalytics,
@@ -21,10 +22,13 @@ const router = express.Router();
 router.route("/create").post(verifyJWT, createForm)
 router
   .route("/f/:formId")
-  .get(getForm) // Remove auth - handle in controller
+  .get(getForm) // Public form viewing (for form submissions)
   .delete(verifyJWT, deleteForm)
   .patch(verifyJWT, renameForm)
   .post(verifyJWT, updateForm);
+
+// New route for getting form for editing (owner only, can access unpublished forms)
+router.route("/edit/:formId").get(verifyJWT, getFormForEdit);
 
 router.route("/o").get(verifyJWT,getAllFormByOwnerId)
 

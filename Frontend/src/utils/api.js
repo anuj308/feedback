@@ -180,7 +180,8 @@ export const endpoints = {
   forms: {
     create: '/form/create',
     getAll: '/form',
-    getById: (id) => `/form/f/${id}`,
+    getById: (id) => `/form/f/${id}`, // Public form viewing (for submissions)
+    getForEdit: (id) => `/form/edit/${id}`, // Private form editing (owner only)
     update: (id) => `/form/f/${id}`,
     delete: (id) => `/form/f/${id}`,
     rename: (id) => `/form/f/${id}`,

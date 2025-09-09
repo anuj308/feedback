@@ -3,6 +3,7 @@ import "./App.css";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import Settings from "./pages/Settings";
+import Templates from "./pages/Templates";
 import Navabar from "./components/Navabar";
 import Footer from "./components/Footer";
 import CreateForm from "./pages/CreateForm";
@@ -17,7 +18,7 @@ import { useRouteTitle } from "./hooks/usePageTitle";
 // Component to conditionally render Navbar
 const ConditionalNavbar = () => {
   const location = useLocation();
-  const hideNavbarPaths = ['/', '/settings', '/login', '/signup'];
+  const hideNavbarPaths = ['/', '/templates', '/settings', '/login', '/signup'];
   const shouldHideNavbar = hideNavbarPaths.includes(location.pathname) || 
                           location.pathname.startsWith('/create/') ||
                           location.pathname.startsWith('/admin/') ||
@@ -239,6 +240,7 @@ function App() {
           <div className="w-full">
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/templates" element={<Templates />} />
               <Route path="/create/:fId" element={<CreateForm />}/>
               <Route path="/admin/:fId" element={<Admin />}/>
               <Route path="/form/:fId" element={<Form />} />
