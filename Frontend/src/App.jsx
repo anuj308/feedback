@@ -203,7 +203,7 @@ function App() {
   // Show loading spinner while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen w-full flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
@@ -213,40 +213,44 @@ function App() {
   }
 
   return (
-    <FormProvider
-      value={{
-        isAuthenticated,
-        userData,
-        user: userData, // Alias for compatibility
-        forms: [], // This can be implemented if needed
-        currentTheme,
-        setUser,
-        updateUser,
-        setIsAuthenticated,
-        setUserData,
-        logout,
-        checkAuthStatus,
-        resetAppState,
-        applyTheme,
-        isLoading,
-        setIsLoading,
-      }}
-    >
-      <BrowserRouter>
-        <TitleManager />
-        <ConditionalNavbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/create/:fId" element={<CreateForm />}/>
-          <Route path="/admin/:fId" element={<Admin />}/>
-          <Route path="/form/:fId" element={<Form />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-        <Footer />
-      </BrowserRouter>
-    </FormProvider>
+    <div className="w-full min-h-screen">
+      <FormProvider
+        value={{
+          isAuthenticated,
+          userData,
+          user: userData, // Alias for compatibility
+          forms: [], // This can be implemented if needed
+          currentTheme,
+          setUser,
+          updateUser,
+          setIsAuthenticated,
+          setUserData,
+          logout,
+          checkAuthStatus,
+          resetAppState,
+          applyTheme,
+          isLoading,
+          setIsLoading,
+        }}
+      >
+        <BrowserRouter>
+          <TitleManager />
+          <ConditionalNavbar />
+          <div className="w-full">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/create/:fId" element={<CreateForm />}/>
+              <Route path="/admin/:fId" element={<Admin />}/>
+              <Route path="/form/:fId" element={<Form />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </div>
+          <Footer />
+        </BrowserRouter>
+      </FormProvider>
+    </div>
   );
 }
 

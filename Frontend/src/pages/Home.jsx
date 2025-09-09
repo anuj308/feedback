@@ -148,7 +148,7 @@ const Home = () => {
         </div>
       )}
       
-      <div className="min-h-[80vh] mt-0 py-20 px-6 pt-8 pb-2 flex flex-row flex-wrap justify-center mx-auto w-full bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-[80vh] mt-0 py-20 px-6 pt-8 pb-2 flex flex-row flex-wrap justify-center w-full bg-gray-50 dark:bg-gray-900">
         {formsLoading ? (
           <div className="flex flex-col items-center justify-center h-80">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
