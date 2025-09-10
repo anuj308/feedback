@@ -125,22 +125,28 @@ const AnalyticsSummaryCard = ({ analytics, responses }) => {
             📧 Who has responded?
           </h4>
           <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="space-y-2">
-              {responses.slice(0, 10).map((response, index) => {
+            <div className="max-h-64 overflow-y-auto space-y-2 pr-2">
+              {responses.map((response, index) => {
                 const email = response.email || response.respondentEmail || 'Anonymous';
                 const name = response.respondentName || 'Anonymous User';
+                const date = response.createdAt ? new Date(response.createdAt).toLocaleDateString() : '';
                 return (
-                  <div key={index} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-900 dark:text-white">{name}</span>
-                    <span className="text-gray-600 dark:text-gray-400">{email}</span>
+                  <div key={response._id || index} className="flex items-center justify-between text-sm py-1 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                    <div className="flex-1">
+                      <span className="text-gray-900 dark:text-white font-medium">{name}</span>
+                      {email !== 'Anonymous' && (
+                        <div className="text-gray-600 dark:text-gray-400 text-xs">{email}</div>
+                      )}
+                    </div>
+                    {date && (
+                      <span className="text-gray-500 dark:text-gray-400 text-xs">{date}</span>
+                    )}
                   </div>
                 );
               })}
-              {responses.length > 10 && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600">
-                  And {responses.length - 10} more responses...
-                </div>
-              )}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-600 mt-2">
+              {responses.length} {responses.length === 1 ? 'response' : 'responses'} total
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { AdminIndividualCard, DataAdminCard, AnalyticsSummaryCard } from "../components";
 import { useForms } from "../Context/StoreContext";
 import { usePageTitle } from "../hooks/usePageTitle";
+import { downloadCompletePDF, downloadCompleteCSV, downloadSectionPDF, downloadSectionCSV } from "../utils/downloadUtils";
 
 const Admin = () => {
   const { fId: formId } = useParams();
@@ -14,8 +15,12 @@ const Admin = () => {
   const [selectOption, setSelectOption] = useState("summary");
   const [analytics, setAnalytics] = useState(null);
   const [responses, setResponses] = useState([]);
+  const [allResponses, setAllResponses] = useState([]); // For summary display
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [responsesPage, setResponsesPage] = useState(1);
+  const [hasMoreResponses, setHasMoreResponses] = useState(true);
+  const [loadingMoreResponses, setLoadingMoreResponses] = useState(false);
 
   // Set dynamic page title based on form title
   usePageTitle(form?.title ? `Admin: ${form.title} - Feedback Form Builder` : "Admin Dashboard - Feedback Form Builder");
@@ -34,6 +39,7 @@ const Admin = () => {
       console.log("🧹 User not authenticated, clearing admin data");
       setAnalytics(null);
       setResponses([]);
+      setAllResponses([]);
       setForm(null);
       setDropDown(false);
       setSelectOption("summary");
@@ -101,13 +107,48 @@ const Admin = () => {
     }
   };
 
-  const fetchResponses = async () => {
+  const fetchResponses = async (page = 1, append = false) => {
     try {
-      const responsesResponse = await api.get(endpoints.forms.responses(formId));
-      setResponses(responsesResponse.data.data.responses || []);
+      const responsesResponse = await api.get(endpoints.forms.responses(formId), {
+        params: { page, limit: 10 }
+      });
+      const data = responsesResponse.data.data;
+      
+      if (append) {
+        setResponses(prev => [...prev, ...(data.responses || [])]);
+      } else {
+        setResponses(data.responses || []);
+      }
+      
+      setHasMoreResponses(data.hasNextPage || false);
+      setResponsesPage(page);
     } catch (error) {
       console.error("❌ Error fetching responses:", error);
     }
+  };
+
+  const fetchAllResponses = async () => {
+    try {
+      console.log("🔄 Fetching ALL responses for download...");
+      const responsesResponse = await api.get(endpoints.forms.responses(formId), {
+        params: { all: true }
+      });
+      console.log("✅ Fetched all responses:", responsesResponse.data.data);
+      const allResponsesData = responsesResponse.data.data.responses || [];
+      setAllResponses(allResponsesData); // Set for summary display
+      return allResponsesData;
+    } catch (error) {
+      console.error("❌ Error fetching all responses:", error);
+      return [];
+    }
+  };
+
+  const loadMoreResponses = async () => {
+    if (loadingMoreResponses || !hasMoreResponses) return;
+    
+    setLoadingMoreResponses(true);
+    await fetchResponses(responsesPage + 1, true);
+    setLoadingMoreResponses(false);
   };
 
   useEffect(() => {
@@ -116,7 +157,8 @@ const Admin = () => {
       await Promise.all([
         fetchFormData(),
         fetchAnalytics(),
-        fetchResponses()
+        fetchResponses(), // Paginated responses for individual tab
+        fetchAllResponses() // All responses for summary
       ]);
       setLoading(false);
     };
@@ -199,30 +241,106 @@ const Admin = () => {
                 </button>
                 
                 {dropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                     <div className="py-1">
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      <button
+                        onClick={async () => {
+                          try {
+                            // Fetch ALL responses for download
+                            const allResponses = await fetchAllResponses();
+                            
+                            const completeData = {
+                              totalResponses: analytics?.totalResponses || 0,
+                              completionRate: analytics?.completionRate || 100,
+                              averageRating: analytics?.averageRating || 'N/A',
+                              questionStats: analytics?.questionStats || [], // Use correct property name
+                              formQuestions: form?.questions || [], // Add original form questions for better mapping
+                              individualResponses: allResponses || []
+                            };
+                            console.log('📊 Download data for CSV:', {
+                              totalResponses: completeData.totalResponses,
+                              questionStatsLength: completeData.questionStats?.length,
+                              individualResponsesLength: completeData.individualResponses?.length,
+                              questionStats: completeData.questionStats,
+                              individualResponses: completeData.individualResponses
+                            });
+                            await downloadCompleteCSV(completeData, form?.title || 'Form Analytics');
+                            setDropDown(false);
+                          } catch (error) {
+                            console.error('Error downloading CSV:', error);
+                            alert('Error downloading CSV. Please try again.');
+                          }
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        Download as CSV
-                      </a>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Download Complete Analytics (CSV)
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                          Summary, Questions & Responses
+                        </div>
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            // Fetch ALL responses for download
+                            const allResponses = await fetchAllResponses();
+                            
+                            const completeData = {
+                              totalResponses: analytics?.totalResponses || 0,
+                              completionRate: analytics?.completionRate || 100,
+                              averageRating: analytics?.averageRating || 'N/A',
+                              questionStats: analytics?.questionStats || [], // Use correct property name
+                              formQuestions: form?.questions || [], // Add original form questions for better mapping
+                              individualResponses: allResponses || []
+                            };
+                            console.log('📊 Download data for PDF:', {
+                              totalResponses: completeData.totalResponses,
+                              questionStatsLength: completeData.questionStats?.length,
+                              individualResponsesLength: completeData.individualResponses?.length,
+                              questionStats: completeData.questionStats,
+                              individualResponses: completeData.individualResponses
+                            });
+                            await downloadCompletePDF(completeData, form?.title || 'Form Analytics');
+                            setDropDown(false);
+                          } catch (error) {
+                            console.error('Error downloading PDF:', error);
+                            alert('Error downloading PDF. Please try again.');
+                          }
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        Download as PDF
-                      </a>
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          Download Complete Report (PDF)
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                          Professional formatted report
+                        </div>
+                      </button>
+                      <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                      <button
                         onClick={(e) => {
                           e.preventDefault();
                           deleteAllResponses();
                         }}
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        Delete all responses
-                      </a>
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete All Responses
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-6">
+                          This action cannot be undone
+                        </div>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -247,36 +365,36 @@ const Admin = () => {
 
         {/* Tab Navigation */}
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="flex space-x-8 px-6">
+          <nav className="flex justify-center space-x-8 px-6">
             <button
               onClick={() => setSelectOption("summary")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                 selectOption === "summary"
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
               }`}
             >
-              Summary
+              📊 Summary
             </button>
             <button
               onClick={() => setSelectOption("question")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                 selectOption === "question"
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
               }`}
             >
-              Question Analysis
+              📈 Question Analysis
             </button>
             <button
               onClick={() => setSelectOption("individual")}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+              className={`py-4 px-6 border-b-2 font-medium text-sm transition-colors ${
                 selectOption === "individual"
                   ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300"
               }`}
             >
-              Individual Responses
+              👥 Individual Responses
             </button>
           </nav>
         </div>
@@ -286,16 +404,13 @@ const Admin = () => {
           {/* Summary Tab */}
           {selectOption === "summary" && (
             <div className="space-y-6">
-              <AnalyticsSummaryCard analytics={analytics} responses={responses} />
+              <AnalyticsSummaryCard analytics={analytics} responses={allResponses} />
             </div>
           )}
 
           {/* Question Analysis Tab */}
           {selectOption === "question" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Question Analysis
-              </h2>
               {analytics?.questionStats && analytics.questionStats.length > 0 ? (
                 <div className="space-y-6">
                   {analytics.questionStats.map((stat, index) => (
@@ -395,19 +510,42 @@ const Admin = () => {
           {/* Individual Responses Tab */}
           {selectOption === "individual" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Individual Responses
-              </h2>
+              <div className="flex justify-end items-center">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Showing {responses?.length || 0} of {analytics?.totalResponses || 0} responses
+                </p>
+              </div>
               {responses && responses.length > 0 ? (
                 <div className="space-y-4">
-                  {responses.map((response, index) => (
-                    <AdminIndividualCard 
-                      key={response._id} 
-                      s={response} 
-                      name={response.respondentName || 'Anonymous'}
-                      form={form}
-                    />
-                  ))}
+                  <div className="max-h-96 overflow-y-auto space-y-4 pr-2">
+                    {responses.map((response, index) => (
+                      <AdminIndividualCard 
+                        key={response._id} 
+                        s={response} 
+                        name={response.respondentName || 'Anonymous'}
+                        form={form}
+                      />
+                    ))}
+                    
+                    {/* Load More Button / Loading Indicator */}
+                    {hasMoreResponses && (
+                      <div className="text-center py-4">
+                        {loadingMoreResponses ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                            <span className="text-gray-600 dark:text-gray-300">Loading more responses...</span>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={loadMoreResponses}
+                            className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                          >
+                            Load More Responses ({analytics?.totalResponses - responses?.length} remaining)
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8">

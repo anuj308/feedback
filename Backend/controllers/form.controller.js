@@ -399,7 +399,7 @@ const getFormAnalytics = asyncHandler(async (req, res) => {
 // Get individual responses for a form with pagination
 const getFormResponses = asyncHandler(async (req, res) => {
   const { formId } = req.params;
-  const { page = 1, limit = 10 } = req.query;
+  const { page = 1, limit = 10, all = false } = req.query;
 
   const form = await Form.findById(formId);
   if (!form) {
@@ -411,13 +411,22 @@ const getFormResponses = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Not authorized to view responses for this form");
   }
 
-  const responses = await Store.find({ formId })
-    .populate('respondentUser', 'fullName email')
-    .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+  let responses;
+  let totalResponses = await Store.countDocuments({ formId });
 
-  const totalResponses = await Store.countDocuments({ formId });
+  if (all === 'true') {
+    // For downloads - get ALL responses without pagination
+    responses = await Store.find({ formId })
+      .populate('respondentUser', 'fullName email')
+      .sort({ createdAt: -1 });
+  } else {
+    // For UI display - use pagination
+    responses = await Store.find({ formId })
+      .populate('respondentUser', 'fullName email')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+  }
 
   // Enhance response data with question information
   const enhancedResponses = responses.map(response => {
@@ -443,19 +452,33 @@ const getFormResponses = asyncHandler(async (req, res) => {
     };
   });
 
-  res.status(200).json(new ApiResponse(200, {
-    responses: enhancedResponses,
-    totalPages: Math.ceil(totalResponses / limit),
-    currentPage: parseInt(page),
-    totalResponses,
-    hasNextPage: page < Math.ceil(totalResponses / limit),
-    hasPrevPage: page > 1,
-    formInfo: {
-      formTitle: form.formTitle,
-      formDescription: form.formDescription,
-      questionCount: form.questions ? form.questions.length : 0
-    }
-  }, "Form responses retrieved successfully"));
+  if (all === 'true') {
+    // For downloads - return all responses without pagination info
+    res.status(200).json(new ApiResponse(200, {
+      responses: enhancedResponses,
+      totalResponses,
+      formInfo: {
+        formTitle: form.formTitle,
+        formDescription: form.formDescription,
+        questionCount: form.questions ? form.questions.length : 0
+      }
+    }, "All form responses retrieved successfully"));
+  } else {
+    // For UI display - return with pagination info
+    res.status(200).json(new ApiResponse(200, {
+      responses: enhancedResponses,
+      totalPages: Math.ceil(totalResponses / limit),
+      currentPage: parseInt(page),
+      totalResponses,
+      hasNextPage: page < Math.ceil(totalResponses / limit),
+      hasPrevPage: page > 1,
+      formInfo: {
+        formTitle: form.formTitle,
+        formDescription: form.formDescription,
+        questionCount: form.questions ? form.questions.length : 0
+      }
+    }, "Form responses retrieved successfully"));
+  }
 });
 
 // Delete all responses for a form
